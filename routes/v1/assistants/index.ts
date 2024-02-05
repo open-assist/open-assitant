@@ -21,7 +21,10 @@ export const handler: Handlers<AssistantObjectType | null> = {
     const fields = CreateAssistantRequest.parse(await req.json());
     const organization = ctx.state.organization as string;
 
-    const assistant = await AssistantRepository.create(fields, organization);
+    const assistant = await AssistantRepository.create<AssistantObjectType>(
+      fields,
+      organization,
+    );
 
     return Response.json(assistant, { status: 201 });
   },

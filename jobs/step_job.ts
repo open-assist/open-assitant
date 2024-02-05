@@ -12,7 +12,7 @@ import { RunRepository } from "$/repositories/run.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
 import { MessageRepository } from "$/repositories/message.ts";
 import { Gemini } from "$/vendors/google/gemini.ts";
-import { RunStepDetailsMessagesObjectType } from "$/vendors/google/gemini.ts";
+import { RunStepDetailsMessagesObjectType } from "$/vendors/google/schemas.ts";
 import { RateLimitExceeded } from "$/utils/errors.ts";
 import { ServerError } from "$/utils/errors.ts";
 import { DbCommitError } from "$/utils/errors.ts";
@@ -50,8 +50,8 @@ export class StepJob {
     try {
       const stepDetails = await Gemini.generateContent(
         run.model || assistant.model,
-        messages.slice(-1),
-        allSteps.slice(0, -1),
+        messages,
+        allSteps,
         run.instructions || assistant.instructions,
         assistant.tools,
       );

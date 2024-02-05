@@ -12,7 +12,7 @@ The goal of this project is to provide LLM developers with a unified platform to
 
 The future plans for this project include:
 
-- [-] Supporting [Google AI](https://ai.google.dev/).
+- [ ] Supporting [Google AI](https://ai.google.dev/).
     - [x] Method: models.generateContent
     - [ ] Function calling
     - [ ] Semantic retrieval

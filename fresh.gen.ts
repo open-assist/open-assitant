@@ -2,9 +2,9 @@
 // This file SHOULD be checked into source version control.
 // This file is automatically updated during development when running `dev.ts`.
 
-import * as $_404 from "./routes/_404.tsx";
+import * as $_404 from "./routes/_404.ts";
 import * as $_middleware from "./routes/_middleware.ts";
-import * as $index from "./routes/index.tsx";
+import * as $index from "./routes/index.ts";
 import * as $internal_middleware from "./routes/internal/_middleware.ts";
 import * as $internal_tokens_token_id_ from "./routes/internal/tokens/[token_id].ts";
 import * as $internal_tokens_index from "./routes/internal/tokens/index.ts";
@@ -27,9 +27,9 @@ import { type Manifest } from "$fresh/server.ts";
 
 const manifest = {
   routes: {
-    "./routes/_404.tsx": $_404,
+    "./routes/_404.ts": $_404,
     "./routes/_middleware.ts": $_middleware,
-    "./routes/index.tsx": $index,
+    "./routes/index.ts": $index,
     "./routes/internal/_middleware.ts": $internal_middleware,
     "./routes/internal/tokens/[token_id].ts": $internal_tokens_token_id_,
     "./routes/internal/tokens/index.ts": $internal_tokens_index,

@@ -1,6 +1,10 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
-import { AssistantObjectType, ModifyAssistantRequest } from "openai_schemas";
+import {
+  AssistantObjectType,
+  ModifyAssistantRequest,
+  DeleteAssistantResponse,
+} from "openai_schemas";
 
 const getIDs = (ctx: FreshContext) => ({
   id: ctx.params.assistant_id as string,
@@ -10,10 +14,7 @@ const getIDs = (ctx: FreshContext) => ({
 async function getAssistant(ctx: FreshContext) {
   const { id, parentId } = getIDs(ctx);
 
-  return (await AssistantRepository.findById<AssistantObjectType>(
-    id,
-    parentId,
-  ));
+  return await AssistantRepository.findById<AssistantObjectType>(id, parentId);
 }
 
 export const handler: Handlers<AssistantObjectType | null> = {
@@ -39,7 +40,6 @@ export const handler: Handlers<AssistantObjectType | null> = {
     const { id, parentId } = getIDs(ctx);
 
     await AssistantRepository.destory(id, parentId);
-
-    return new Response(undefined, { status: 204 });
+    return Response.json(DeleteAssistantResponse.parse({ id }));
   },
 };
