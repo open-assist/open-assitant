@@ -40,18 +40,15 @@ export class StepJob {
       run.thread_id,
       { order: "asc" },
     );
-    const allSteps = await StepRepository.findAll<RunStepObjectType>(
-      step.run_id,
-      {
-        order: "asc",
-      },
-    );
+    const allSteps = await StepRepository.findAllByThreadId(run.thread_id, {
+      order: "asc",
+    });
 
     try {
       const stepDetails = await Gemini.generateContent(
         run.model || assistant.model,
         messages,
-        allSteps,
+        allSteps.slice(0, -1),
         run.instructions || assistant.instructions,
         assistant.tools,
       );
@@ -164,6 +161,12 @@ export class StepJob {
       run,
       {
         status: "requires_action",
+        required_action: {
+          type: "submit_tool_outputs",
+          submit_tool_outputs: {
+            tool_calls: functionToolCalls,
+          },
+        },
       },
       run.thread_id,
     );

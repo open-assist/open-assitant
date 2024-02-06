@@ -1,3 +1,8 @@
+import {
+  type ToolOutputType,
+  type RunStepDetailsToolCallsFunctionObjectType,
+  type RunStepDetailsToolCallsObjectType,
+} from "openai_schemas";
 import { FunctionToolCall, Meta } from "$/schemas/_base.ts";
 import { kv, Repository } from "$/repositories/_repository.ts";
 import { DbCommitError } from "$/utils/errors.ts";
@@ -16,15 +21,20 @@ export class RunRepository extends Repository {
   static hasSecondaryKey = true;
 
   static async create<T extends Meta>(fields: Partial<T>, parentId?: string) {
-    const { operation, value } = this.createWithoutCommit<T>({
-      ...fields,
-      status: "queued",
-      expires_at: Date.now() + RUN_EXPIRED_DURATION,
-    }, parentId);
-    operation.enqueue({ action: "perform", runId: value.id })
-      .enqueue({ action: "expire", runId: value.id }, {
+    const { operation, value } = this.createWithoutCommit<T>(
+      {
+        ...fields,
+        status: "queued",
+        expires_at: Date.now() + RUN_EXPIRED_DURATION,
+      },
+      parentId,
+    );
+    operation.enqueue({ action: "perform", runId: value.id }).enqueue(
+      { action: "expire", runId: value.id },
+      {
         delay: RUN_EXPIRED_DURATION,
-      });
+      },
+    );
 
     const { ok } = await operation.commit();
     if (!ok) throw new DbCommitError();
@@ -48,7 +58,11 @@ export class RunRepository extends Repository {
     return newRun;
   }
 
-  static async submitToolOutputs(run: Run, step: Step, outputs: ToolOutput[]) {
+  static async submitToolOutputs(
+    run: Run,
+    step: Step,
+    outputs: ToolOutputType[],
+  ) {
     const newRun = {
       ...run,
       status: "queued",
@@ -57,15 +71,21 @@ export class RunRepository extends Repository {
     const atomicOp = kv
       .atomic()
       .enqueue({ action: "perform", runId: newRun.id })
+      .enqueue(
+        { action: "cancel", runId: newRun.id },
+        { delay: RUN_EXPIRED_DURATION },
+      )
       .set(this.genKvKey(run.thread_id, run.id), newRun);
 
-    const toolCallsMap = (step.step_details as ToolCalls).tool_calls.reduce(
+    const toolCallsMap = (
+      step.step_details as RunStepDetailsToolCallsObjectType
+    ).tool_calls.reduce(
       (pre, cur) => ({
         ...pre,
         [cur.id]: cur,
       }),
       {},
-    ) as { [key: string]: FunctionToolCall };
+    ) as { [key: string]: RunStepDetailsToolCallsFunctionObjectType };
 
     outputs.forEach((o) => {
       toolCallsMap[o.tool_call_id].function.output = o.output;

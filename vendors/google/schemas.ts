@@ -21,8 +21,8 @@ export const messageObjectToContent = MessageObject.transform(
     }) as ContentType,
 );
 
-export const runStepDetailsToolCallsToContents =
-  RunStepDetailsToolCallsObject.transform((toolCalls) => {
+export const runStepDetailsToolCallsToContents = RunStepDetailsToolCallsObject
+  .transform((toolCalls) => {
     return [
       {
         role: "model",
@@ -71,8 +71,8 @@ function isFunctionCallParts(parts: object[]) {
   }
   return false;
 }
-export const generateContentResponseToStepDetails =
-  GenerateContentResponse.transform((v) =>
+export const generateContentResponseToStepDetails = GenerateContentResponse
+  .transform((v) =>
     v.candidates.map((c) => {
       if (c.content.parts) {
         if (isFunctionCallParts(c.content.parts)) {
@@ -105,5 +105,5 @@ export const generateContentResponseToStepDetails =
         }
       }
       return { type: "unknown" };
-    }),
+    })
   );

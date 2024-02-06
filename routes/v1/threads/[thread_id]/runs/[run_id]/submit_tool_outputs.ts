@@ -5,6 +5,7 @@ import { type Step } from "$/schemas/step.ts";
 import { RunRepository } from "$/repositories/run.ts";
 import { getRun } from "../[run_id].ts";
 import { StepRepository } from "$/repositories/step.ts";
+import { SubmitToolOutputsRunRequest } from "openai_schemas";
 
 export const handler: Handlers<Run | null> = {
   async POST(req: Request, ctx: FreshContext) {
@@ -13,10 +14,9 @@ export const handler: Handlers<Run | null> = {
       run.status !== "requires_action" ||
       run.required_action?.type !== "submit_tool_outputs"
     ) {
-      throw new UnprocessableContent(
-        undefined,
-        { cause: "Invalid status or required action of the run." },
-      );
+      throw new UnprocessableContent(undefined, {
+        cause: "Invalid status or required action of the run.",
+      });
     }
     const step = await StepRepository.findOne<Step>(run.id);
     if (!step) {
@@ -31,7 +31,7 @@ export const handler: Handlers<Run | null> = {
       });
     }
 
-    const toolOutpus = toolOutputsSchema.parse(await req.json());
+    const toolOutpus = SubmitToolOutputsRunRequest.parse(await req.json());
 
     const newRun = await RunRepository.submitToolOutputs(
       run,
@@ -42,7 +42,7 @@ export const handler: Handlers<Run | null> = {
     return Response.json(newRun, {
       status: 202,
       headers: {
-        "Location": `/threads/${run.thread_id}/runs/${run.id}`,
+        Location: `/threads/${run.thread_id}/runs/${run.id}`,
       },
     });
   },

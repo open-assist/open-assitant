@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { ulid } from "$std/ulid/mod.ts";
-// import { kv } from "$/models/_db.ts";
 import { DbCommitError, NotFound } from "$/utils/errors.ts";
 import { type Meta } from "$/schemas/_base.ts";
 
@@ -175,13 +174,13 @@ export class Repository {
     return value;
   }
 
-  static updateWithoutCommit<T>(
+  static updateWithoutCommit<T extends Meta>(
     old: T,
     fields: Partial<T>,
     parentId?: string,
     operation?: Deno.AtomicOperation,
   ) {
-    const key = this.genKvKey(parentId, (old as Meta).id);
+    const key = this.genKvKey(parentId, old.id);
     const value = {
       ...old,
       ...fields,
@@ -195,7 +194,11 @@ export class Repository {
     return { operation, value };
   }
 
-  static async update<T>(old: T, fields: Partial<T>, parentId?: string) {
+  static async update<T extends Meta>(
+    old: T,
+    fields: Partial<T>,
+    parentId?: string,
+  ) {
     const { operation, value } = this.updateWithoutCommit(
       old,
       fields,

@@ -2,6 +2,7 @@ import type { RunObjectType, RunStepObjectType } from "openai_schemas";
 import { DbCommitError } from "$/utils/errors.ts";
 import { RunRepository } from "$/repositories/run.ts";
 import { StepRepository } from "$/repositories/step.ts";
+import { kv } from "$/repositories/_repository.ts";
 
 export interface RunJobMessage {
   action: "perform" | "cancel" | "expire";
@@ -45,9 +46,8 @@ export class RunJob {
 
     const runKey = RunRepository.genKvKey(run.thread_id, run.id);
     // run status: queued -> in_progress, and create step
-    const { operation, value: step } = StepRepository.createWithoutCommit<
-      RunStepObjectType
-    >(
+    const operation = kv.atomic();
+    const { value: step } = await StepRepository.createWithThread(
       {
         assistant_id: run.assistant_id,
         thread_id: run.thread_id,
@@ -55,6 +55,8 @@ export class RunJob {
         status: "in_progress",
       },
       run.id,
+      run.thread_id,
+      operation,
     );
     operation
       .set(runKey, {

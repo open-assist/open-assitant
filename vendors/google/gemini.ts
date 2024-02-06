@@ -9,19 +9,82 @@ import {
 } from "openai_schemas";
 import { RateLimitExceeded, ServerError } from "$/utils/errors.ts";
 import {
+  generateContentResponseToStepDetails,
   messageObjectToContent,
   runStepDetailsToolCallsToContents,
-  generateContentResponseToStepDetails,
 } from "$/vendors/google/schemas.ts";
 
 export class Gemini {
   static baseURL = "https://generativelanguage.googleapis.com";
   static apiVersion = "v1beta";
 
+  private static convertMessageToContent(
+    contents: ContentType[],
+    message: MessageObjectType,
+  ) {
+    const content = messageObjectToContent.parse(message);
+    if (contents.at(-1)?.role === content.role) {
+      contents.at(-1)?.parts.push(...content.parts);
+    } else {
+      contents.push(content);
+    }
+  }
+
+  private static convertStepToContent(
+    contents: ContentType[],
+    step: RunStepObjectType,
+  ) {
+    contents.push(
+      ...runStepDetailsToolCallsToContents.parse(step.step_details),
+    );
+  }
+
+  private static transformMessagesAndSteps(
+    contents: ContentType[],
+    messages: MessageObjectType[],
+    steps: RunStepObjectType[],
+  ) {
+    const toolCallSteps = steps.filter(
+      (s) => s.step_details && s.step_details.type === "tool_calls",
+    );
+    let mIdx = 0,
+      sIdx = 0;
+    while (mIdx < messages.length && sIdx < toolCallSteps.length) {
+      const mTime = messages.at(mIdx)?.created_at as number;
+      const sTime = toolCallSteps.at(sIdx)?.created_at as number;
+      if (mTime <= sTime) {
+        this.convertMessageToContent(
+          contents,
+          messages.at(mIdx) as MessageObjectType,
+        );
+        mIdx += 1;
+      } else {
+        this.convertStepToContent(
+          contents,
+          toolCallSteps.at(sIdx) as RunStepObjectType,
+        );
+        sIdx += 1;
+      }
+    }
+    while (mIdx < messages.length) {
+      this.convertMessageToContent(
+        contents,
+        messages.at(mIdx) as MessageObjectType,
+      );
+      mIdx += 1;
+    }
+    while (sIdx < toolCallSteps.length) {
+      this.convertStepToContent(
+        contents,
+        toolCallSteps.at(sIdx) as RunStepObjectType,
+      );
+    }
+  }
+
   public static async generateContent(
     modelName: string,
     messages: MessageObjectType[],
-    steps?: RunStepObjectType[],
+    steps: RunStepObjectType[],
     instructions?: string | null,
     tools?:
       | (
@@ -32,30 +95,14 @@ export class Gemini {
       | null,
   ) {
     const contents: ContentType[] = [];
-    messages.forEach((m) => {
-      const content = messageObjectToContent.parse(m);
-      if (contents.at(-1)?.role === content.role) {
-        contents.at(-1)?.parts.push(...content.parts);
-      } else {
-        contents.push(content);
-      }
-    });
-
-    if (steps) {
-      steps.forEach((step) => {
-        if (step.step_details && step.step_details.type === "tool_calls") {
-          contents.push(
-            ...runStepDetailsToolCallsToContents.parse(
-              step.step_details.tool_calls,
-            ),
-          );
-        }
+    if (instructions) {
+      contents.push({
+        role: "user",
+        parts: [{ text: instructions }],
       });
     }
 
-    if (instructions) {
-      (contents[0].parts as PartType[]).unshift({ text: instructions });
-    }
+    this.transformMessagesAndSteps(contents, messages, steps);
 
     const functions = tools
       ?.filter((t) => t.type === "function")
@@ -64,7 +111,7 @@ export class Gemini {
       }));
 
     const response = await this.fetch(`/models/${modelName}:generateContent`, {
-      method: "post",
+      method: "POST",
       body: JSON.stringify({
         contents,
         tools: [
