@@ -1,9 +1,10 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
 import {
-  type Thread,
-  ThreadRepository,
-  threadSchema,
-} from "$/repositories/thread.ts";
+  ModifyThreadRequest,
+  DeleteThreadResponse,
+  type ThreadObjectType,
+} from "openai_schemas";
+import { ThreadRepository } from "$/repositories/thread.ts";
 
 const getIDs = (ctx: FreshContext) => ({
   id: ctx.params.thread_id as string,
@@ -13,25 +14,23 @@ const getIDs = (ctx: FreshContext) => ({
 async function getThread(ctx: FreshContext) {
   const { id, parentId } = getIDs(ctx);
 
-  return (await ThreadRepository.findById(
-    id,
-    parentId,
-  )) as Thread;
+  return await ThreadRepository.findById<ThreadObjectType>(id, parentId);
 }
 
-export const handler: Handlers<Thread | null> = {
+export const handler: Handlers<ThreadObjectType | null> = {
   async GET(_req, ctx: FreshContext) {
     return Response.json(await getThread(ctx));
   },
 
   async PATCH(req: Request, ctx: FreshContext) {
     const oldThread = await getThread(ctx);
-    const organization = ctx.state.organization as string;
-    const fields = threadSchema.pick({ metadata: true }).parse(
-      await req.json(),
-    );
+    if (req.headers.get("content-length") === "0") {
+      return Response.json(oldThread);
+    }
 
-    const newThread = await ThreadRepository.update<Thread>(
+    const organization = ctx.state.organization as string;
+    const fields = ModifyThreadRequest.parse(await req.json());
+    const newThread = await ThreadRepository.update<ThreadObjectType>(
       oldThread,
       fields,
       organization,
@@ -45,6 +44,6 @@ export const handler: Handlers<Thread | null> = {
 
     await ThreadRepository.destory(id, parentId);
 
-    return new Response(undefined, { status: 204 });
+    return Response.json(DeleteThreadResponse.parse({ id }));
   },
 };

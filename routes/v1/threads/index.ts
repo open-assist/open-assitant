@@ -1,17 +1,14 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import {
-  type Thread,
-  ThreadRepository,
-  threadSchema,
-} from "$/repositories/thread.ts";
+import { CreateThreadRequest, type ThreadObjectType } from "openai_schemas";
+import { ThreadRepository } from "$/repositories/thread.ts";
 import { pagableSchema, sortSchema } from "$/repositories/_repository.ts";
 
-export const handler: Handlers<Thread | null> = {
+export const handler: Handlers<ThreadObjectType | null> = {
   async GET(_req: Request, ctx: FreshContext) {
     const params = Object.fromEntries(ctx.url.searchParams);
     const organization = ctx.state.organization as string;
 
-    const page = await ThreadRepository.findAllByPage<Thread>(
+    const page = await ThreadRepository.findAllByPage<ThreadObjectType>(
       organization,
       pagableSchema.parse(params),
       sortSchema.parse(params),
@@ -21,10 +18,16 @@ export const handler: Handlers<Thread | null> = {
   },
 
   async POST(req: Request, ctx: FreshContext) {
-    const fields = threadSchema.parse(await req.json()) as Thread;
+    const fields =
+      req.headers.get("content-length") === "0"
+        ? { metadata: {} }
+        : CreateThreadRequest.parse(await req.json());
     const organization = ctx.state.organization as string;
 
-    const thread = await ThreadRepository.create(fields, organization);
+    const thread = await ThreadRepository.create<ThreadObjectType>(
+      fields,
+      organization,
+    );
 
     return Response.json(thread, { status: 201 });
   },
