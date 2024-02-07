@@ -8,9 +8,11 @@ import {
   type RunStepObjectType,
   SubmitToolOutputsRunRequest,
 } from "openai_schemas";
+import { getThread } from "$/routes/v1/threads/[thread_id].ts";
 
 export const handler: Handlers<RunObjectType | null> = {
   async POST(req: Request, ctx: FreshContext) {
+    await getThread(ctx);
     const run = await getRun(ctx);
     if (
       run.status !== "requires_action" ||
