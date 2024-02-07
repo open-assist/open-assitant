@@ -70,6 +70,7 @@ export class StepJob {
         }
       });
     } catch (error) {
+      console.log("[step job]", error);
       // status: in_progress -> failed
       const lastError = {
         code: "server_error",

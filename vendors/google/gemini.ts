@@ -1,5 +1,5 @@
 import { env } from "$/fresh.config.ts";
-import { type ContentType, type PartType } from "googleai_schemas";
+import { type ContentType } from "googleai_schemas";
 import {
   type AssistantToolsCodeType,
   type AssistantToolsFunctionType,

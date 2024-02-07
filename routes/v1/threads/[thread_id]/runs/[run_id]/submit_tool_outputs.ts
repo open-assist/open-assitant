@@ -1,13 +1,15 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
 import { UnprocessableContent } from "$/utils/errors.ts";
-import { type Run, toolOutputsSchema } from "$/schemas/run.ts";
-import { type Step } from "$/schemas/step.ts";
 import { RunRepository } from "$/repositories/run.ts";
-import { getRun } from "../[run_id].ts";
+import { getRun } from "$/routes/v1/threads/[thread_id]/runs/[run_id].ts";
 import { StepRepository } from "$/repositories/step.ts";
-import { SubmitToolOutputsRunRequest } from "openai_schemas";
+import {
+  type RunObjectType,
+  type RunStepObjectType,
+  SubmitToolOutputsRunRequest,
+} from "openai_schemas";
 
-export const handler: Handlers<Run | null> = {
+export const handler: Handlers<RunObjectType | null> = {
   async POST(req: Request, ctx: FreshContext) {
     const run = await getRun(ctx);
     if (
@@ -18,7 +20,7 @@ export const handler: Handlers<Run | null> = {
         cause: "Invalid status or required action of the run.",
       });
     }
-    const step = await StepRepository.findOne<Step>(run.id);
+    const step = await StepRepository.findOne<RunStepObjectType>(run.id);
     if (!step) {
       throw new UnprocessableContent();
     }

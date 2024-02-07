@@ -1,14 +1,14 @@
-import {
-  type ToolOutputType,
-  type RunStepDetailsToolCallsFunctionObjectType,
-  type RunStepDetailsToolCallsObjectType,
+import type {
+  ToolOutputType,
+  RunStepDetailsToolCallsFunctionObjectType,
+  RunStepDetailsToolCallsObjectType,
+  RunObjectType,
+  RunStepObjectType,
 } from "openai_schemas";
-import { FunctionToolCall, Meta } from "$/schemas/_base.ts";
 import { kv, Repository } from "$/repositories/_repository.ts";
-import { DbCommitError } from "$/utils/errors.ts";
-import { Run, ToolOutput } from "$/schemas/run.ts";
-import { Step, ToolCalls } from "$/schemas/step.ts";
 import { StepRepository } from "$/repositories/step.ts";
+import { type Meta } from "$/schemas/_base.ts";
+import { DbCommitError } from "$/utils/errors.ts";
 
 // 10 minutes
 export const RUN_EXPIRED_DURATION = 10 * 60 * 1000;
@@ -20,8 +20,12 @@ export class RunRepository extends Repository {
   static self = "run";
   static hasSecondaryKey = true;
 
-  static async create<T extends Meta>(fields: Partial<T>, parentId?: string) {
-    const { operation, value } = this.createWithoutCommit<T>(
+  static async create<T extends Meta>(
+    fields: Partial<T>,
+    parentId?: string,
+    operation?: Deno.AtomicOperation,
+  ) {
+    const { operation: newOp, value } = this.createWithoutCommit<T>(
       {
         ...fields,
         status: "queued",
@@ -29,6 +33,12 @@ export class RunRepository extends Repository {
       },
       parentId,
     );
+    let commit = true;
+    if (operation) {
+      commit = false;
+    } else {
+      operation = newOp;
+    }
     operation.enqueue({ action: "perform", runId: value.id }).enqueue(
       { action: "expire", runId: value.id },
       {
@@ -36,17 +46,20 @@ export class RunRepository extends Repository {
       },
     );
 
-    const { ok } = await operation.commit();
-    if (!ok) throw new DbCommitError();
+    if (commit) {
+      const { ok } = await operation.commit();
+      if (!ok) throw new DbCommitError();
+      return { value };
+    }
 
-    return value;
+    return { operation, value };
   }
 
-  static async cancel(old: Run, threadId: string) {
+  static async cancel(old: RunObjectType, threadId: string) {
     const newRun = {
       ...old,
       status: "cancelling",
-    } as Run;
+    } as RunObjectType;
 
     const { ok } = await kv
       .atomic()
@@ -59,14 +72,14 @@ export class RunRepository extends Repository {
   }
 
   static async submitToolOutputs(
-    run: Run,
-    step: Step,
+    run: RunObjectType,
+    step: RunStepObjectType,
     outputs: ToolOutputType[],
   ) {
     const newRun = {
       ...run,
       status: "queued",
-    } as Run;
+    } as RunObjectType;
 
     const atomicOp = kv
       .atomic()
@@ -96,7 +109,7 @@ export class RunRepository extends Repository {
         ...step.step_details,
         tool_calls: Object.values(toolCallsMap),
       },
-    } as Step;
+    } as RunStepObjectType;
     atomicOp.set(StepRepository.genKvKey(run.id, step.id), newStep);
 
     const { ok } = await atomicOp.commit();

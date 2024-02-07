@@ -165,13 +165,42 @@ export class Repository {
     return { operation, value };
   }
 
-  static async create<T extends Meta>(fields: Partial<T>, parentId?: string) {
-    const { operation, value } = this.createWithoutCommit(fields, parentId);
+  static async create<T extends Meta>(
+    fields: Partial<T>,
+    parentId?: string,
+    operation?: Deno.AtomicOperation,
+  ) {
+    let commit = true;
+    if (operation) {
+      commit = false;
+    } else {
+      operation = kv.atomic();
+    }
 
-    const { ok } = await operation.commit();
-    if (!ok) throw new DbCommitError();
+    const value = {
+      object: this.object,
+      id: `${this.idPrefix}-${ulid()}`,
+      created_at: Date.now(),
+      ...fields,
+    } as T;
 
-    return value;
+    const key = this.genKvKey(parentId, value.id);
+    operation.check({ key, versionstamp: null }).set(key, value);
+
+    if (this.hasSecondaryKey) {
+      const secondaryKey = this.genKvKey(undefined, value.id);
+      operation
+        .check({ key: secondaryKey, versionstamp: null })
+        .set(secondaryKey, key);
+    }
+
+    if (commit) {
+      const { ok } = await operation.commit();
+      if (!ok) throw new DbCommitError();
+
+      return { value };
+    }
+    return { operation, value };
   }
 
   static updateWithoutCommit<T extends Meta>(

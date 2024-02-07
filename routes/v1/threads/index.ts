@@ -24,11 +24,11 @@ export const handler: Handlers<ThreadObjectType | null> = {
         : CreateThreadRequest.parse(await req.json());
     const organization = ctx.state.organization as string;
 
-    const thread = await ThreadRepository.create<ThreadObjectType>(
+    const { value } = await ThreadRepository.createWithMessages(
       fields,
       organization,
     );
 
-    return Response.json(thread, { status: 201 });
+    return Response.json(value, { status: 201 });
   },
 };
