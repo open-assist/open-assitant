@@ -11,7 +11,7 @@ const getIDs = (ctx: FreshContext) => ({
   parentId: ctx.state.organization as string,
 });
 
-async function getThread(ctx: FreshContext) {
+export async function getThread(ctx: FreshContext) {
   const { id, parentId } = getIDs(ctx);
 
   return await ThreadRepository.findById<ThreadObjectType>(id, parentId);
