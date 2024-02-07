@@ -23,6 +23,10 @@ export const handler: Handlers<MessageObjectType | null> = {
   async PATCH(req: Request, ctx: FreshContext) {
     const thread = await getThread(ctx);
     const oldMessage = await getMessage(ctx);
+    if (req.headers.get("content-length") === "0") {
+      return Response.json(oldMessage);
+    }
+
     const fields = ModifyMessageRequest.parse(await req.json());
 
     const newMessage = await MessageRepository.update<MessageObjectType>(
