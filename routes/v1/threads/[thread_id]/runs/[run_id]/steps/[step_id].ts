@@ -1,15 +1,18 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { type Step } from "$/schemas/step.ts";
 import { StepRepository } from "$/repositories/step.ts";
+import { getThread } from "$/routes/v1/threads/[thread_id].ts";
+import { getRun } from "$/routes/v1/threads/[thread_id]/runs/[run_id].ts";
+import type { RunStepObjectType } from "openai_schemas";
 
-export const handler: Handlers<Step | null> = {
+export const handler: Handlers<RunStepObjectType | null> = {
   async GET(_req, ctx: FreshContext) {
-    const runId = ctx.params.run_id;
-    const stepId = ctx.params.step_id;
+    await getThread(ctx);
+    const run = await getRun(ctx);
 
-    const step = await StepRepository.findById<Step>(
+    const stepId = ctx.params.step_id;
+    const step = await StepRepository.findById<RunStepObjectType>(
       stepId,
-      runId,
+      run.id,
     );
 
     return Response.json(step);
