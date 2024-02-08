@@ -1,7 +1,6 @@
 import { ulid } from "$std/ulid/mod.ts";
 import { kv, Repository, type Sort } from "$/repositories/_repository.ts";
 import { ThreadRepository } from "$/repositories/thread.ts";
-import { type Meta } from "$/schemas/_base.ts";
 import { DbCommitError } from "$/utils/errors.ts";
 import type { RunStepObjectType } from "openai_schemas";
 

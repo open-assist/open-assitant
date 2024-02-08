@@ -25,20 +25,23 @@ export class RunRepository extends Repository {
     parentId?: string,
     operation?: Deno.AtomicOperation,
   ) {
-    const { operation: newOp, value } = this.createWithoutCommit<T>(
+    let commit = true;
+    if (operation) {
+      commit = false;
+    } else {
+      operation = kv.atomic();
+    }
+
+    const { value } = await super.create<T>(
       {
         ...fields,
         status: "queued",
         expires_at: Date.now() + RUN_EXPIRED_DURATION,
       },
       parentId,
+      operation,
     );
-    let commit = true;
-    if (operation) {
-      commit = false;
-    } else {
-      operation = newOp;
-    }
+
     operation.enqueue({ action: "perform", runId: value.id }).enqueue(
       { action: "expire", runId: value.id },
       {

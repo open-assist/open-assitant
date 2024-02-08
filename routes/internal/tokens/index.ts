@@ -26,7 +26,10 @@ export const handler: Handlers<Token | null> = {
     const fields = tokenSchema.parse(await req.json());
     const organization = ctx.state.organization as string;
 
-    const token = await TokenRepository.create<Token>(fields, organization);
+    const { value: token } = await TokenRepository.create<Token>(
+      fields,
+      organization,
+    );
 
     return Response.json(token, {
       status: 201,

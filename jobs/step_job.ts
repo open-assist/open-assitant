@@ -16,6 +16,7 @@ import { RunStepDetailsMessagesObjectType } from "$/vendors/google/schemas.ts";
 import { RateLimitExceeded } from "$/utils/errors.ts";
 import { ServerError } from "$/utils/errors.ts";
 import { DbCommitError } from "$/utils/errors.ts";
+import { kv } from "$/repositories/_repository.ts";
 
 export interface StepJobMessage {
   stepId: string;
@@ -113,8 +114,9 @@ export class StepJob {
     content: MessageContentTextObjectType[],
   ) {
     // create message
-    const { operation, value: message } =
-      MessageRepository.createWithoutCommit<MessageObjectType>(
+    const operation = kv.atomic();
+    const { value: message } =
+      await MessageRepository.create<MessageObjectType>(
         {
           thread_id: run.thread_id,
           assistant_id: run.assistant_id,
@@ -123,6 +125,7 @@ export class StepJob {
           content,
         },
         run.thread_id,
+        operation,
       );
 
     const stepType = "message_creation";
@@ -133,7 +136,7 @@ export class StepJob {
     };
     const stepKey = StepRepository.genKvKey(run.id, step.id);
     const runKey = RunRepository.genKvKey(run.thread_id, run.id);
-    await operation
+    operation
       .set(stepKey, {
         ...step,
         ...statusFields,
@@ -148,8 +151,10 @@ export class StepJob {
       .set(runKey, {
         ...run,
         ...statusFields,
-      })
-      .commit();
+      });
+
+    const { ok } = await operation.commit();
+    if (!ok) throw new DbCommitError();
   }
 
   private static async _call_function_tool(

@@ -138,33 +138,6 @@ export class Repository {
     return entry.value;
   }
 
-  static createWithoutCommit<T extends Meta>(
-    fields: Partial<T>,
-    parentId?: string,
-  ) {
-    const value = {
-      object: this.object,
-      id: `${this.idPrefix}-${ulid()}`,
-      created_at: Date.now(),
-      ...fields,
-    } as T;
-
-    const key = this.genKvKey(parentId, value.id);
-    const operation = kv
-      .atomic()
-      .check({ key, versionstamp: null })
-      .set(key, value);
-
-    if (this.hasSecondaryKey) {
-      const secondaryKey = this.genKvKey(undefined, value.id);
-      operation
-        .check({ key: secondaryKey, versionstamp: null })
-        .set(secondaryKey, key);
-    }
-
-    return { operation, value };
-  }
-
   static async create<T extends Meta>(
     fields: Partial<T>,
     parentId?: string,
