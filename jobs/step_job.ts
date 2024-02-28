@@ -11,8 +11,8 @@ import type {
 import { RunRepository } from "$/repositories/run.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
 import { MessageRepository } from "$/repositories/message.ts";
-import { Gemini } from "$/vendors/google/gemini.ts";
-import { RunStepDetailsMessagesObjectType } from "$/vendors/google/schemas.ts";
+import { Gemini } from "$/providers/google/gemini.ts";
+import { RunStepDetailsMessagesObjectType } from "$/providers/google/schemas.ts";
 import { RateLimitExceeded } from "$/utils/errors.ts";
 import { ServerError } from "$/utils/errors.ts";
 import { DbCommitError } from "$/utils/errors.ts";
