@@ -12,7 +12,7 @@ import {
   generateContentResponseToStepDetails,
   messageObjectToContent,
   runStepDetailsToolCallsToContents,
-} from "$/vendors/google/schemas.ts";
+} from "$/providers/google/schemas.ts";
 
 export class Gemini {
   static baseURL = "https://generativelanguage.googleapis.com";
