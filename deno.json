@@ -21,8 +21,9 @@
     "preact/": "https://esm.sh/preact@10.19.2/",
     "$std/": "https://deno.land/std@0.208.0/",
     "zod": "https://deno.land/x/zod@v3.22.4/mod.ts",
-    "openai_schemas": "https://deno.land/x/open_schemas@1.0.3/zod/openai/mod.ts",
-    "googleai_schemas": "https://deno.land/x/open_schemas@1.0.3/zod/googleai/mod.ts"
+    "openai_schemas": "https://deno.land/x/open_schemas@1.2.0/zod/openai/mod.ts",
+    "anthropic_schemas": "https://deno.land/x/open_schemas@1.2.0/zod/anthropic/mod.ts",
+    "googleai_schemas": "https://deno.land/x/open_schemas@1.2.0/zod/googleai/mod.ts"
   },
   "nodeModulesDir": true
 }

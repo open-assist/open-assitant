@@ -16,7 +16,6 @@ export interface State {
 
 export function handler(req: Request, ctx: FreshContext) {
   const headers: [string, string][] = [
-    ["Content-Type", "application/json"],
     ["Access-Control-Allow-Origin", req.headers.get("Origin") || "*"],
     ["Access-Control-Allow-Credentials", "true"],
     ["Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS"],

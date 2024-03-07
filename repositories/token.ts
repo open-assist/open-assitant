@@ -25,16 +25,18 @@ export class TokenRepository extends Repository {
   static async create<T extends Meta>(
     fields: Partial<T>,
     organization: string,
-    operation?: Deno.AtomicOperation,
+    _op?: Deno.AtomicOperation,
   ) {
-    let commit = true;
-    if (operation) {
-      commit = false;
+    let token;
+    const content = (fields as Partial<Token>).content;
+    if (content) {
+      token = content;
     } else {
-      operation = kv.atomic();
+      token = `sk-${ulid()}`;
     }
 
-    const token = `sk-${ulid()}`;
+    const operation = kv.atomic();
+
     const { value } = await super.create<T>(
       {
         ...fields,
@@ -51,13 +53,9 @@ export class TokenRepository extends Repository {
       )
       .set(this.genOrgByTokenKey(token), organization);
 
-    if (commit) {
-      const { ok } = await operation.commit();
-      if (!ok) throw new DbCommitError();
-      return { value };
-    }
-
-    return { operation, value };
+    const { ok } = await operation.commit();
+    if (!ok) throw new DbCommitError();
+    return { value };
   }
 
   static async destory(id: string, organization: string): Promise<void> {
