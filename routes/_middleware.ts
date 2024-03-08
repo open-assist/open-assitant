@@ -65,9 +65,8 @@ export function handler(req: Request, ctx: FreshContext) {
           break;
       }
 
-      return new Response(JSON.stringify(problemDetail), {
+      return Response.json(problemDetail, {
         status: problemDetail.status,
-        headers,
       });
     })
     .then((resp) => {
