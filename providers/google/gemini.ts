@@ -1,4 +1,3 @@
-import { env } from "$/fresh.config.ts";
 import { type ContentType } from "googleai_schemas";
 import {
   type AssistantToolsCodeType,
@@ -136,7 +135,7 @@ export class Gemini {
       ...init,
       headers: {
         ...init?.headers,
-        "X-Goog-Api-Key": env["GOOGLE_API_KEY"],
+        "X-Goog-Api-Key": Deno.env.get("GOOGLE_API_KEY") as string,
       },
     });
   }

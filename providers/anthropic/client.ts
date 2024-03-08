@@ -1,4 +1,3 @@
-import { env } from "$/fresh.config.ts";
 import type { CreateChatCompletionRequestType } from "openai_schemas";
 import {
   CreateChatCompletionRequestToCreateMessageRequest,
@@ -18,7 +17,7 @@ export default class Client {
         ...init?.headers,
         "content-type": "application/json",
         "anthropic-version": this.version,
-        "x-api-key": env["ANTHROPIC_API_KEY"],
+        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY") as string,
       },
     });
   }

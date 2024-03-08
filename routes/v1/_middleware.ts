@@ -2,10 +2,9 @@ import { FreshContext } from "$fresh/server.ts";
 import { Unauthorized } from "$/utils/errors.ts";
 import { State } from "$/routes/_middleware.ts";
 import { TokenRepository } from "$/repositories/token.ts";
-import { env } from "$/fresh.config.ts";
 
 export async function handler(req: Request, ctx: FreshContext<State>) {
-  if (env["NO_TENANT"] === "true") {
+  if (Deno.env.get("NO_TENANT") === "true") {
     ctx.state.organization = "#org";
   } else {
     const authorization = req.headers.get("Authorization");

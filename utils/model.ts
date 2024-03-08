@@ -1,7 +1,6 @@
-import { env } from "$/fresh.config.ts";
-
+const models = Deno.env.get("MODELS");
 export const MODELS: string[] =
-  env["MODELS"] && env["MODELS"].length > 0 ? env["MODELS"].split(",") : [];
+  models && models.length > 0 ? models.split(",") : [];
 
 function mapModels(pre: object, cur: string) {
   const parts = cur.split(":");
@@ -14,7 +13,9 @@ function mapModels(pre: object, cur: string) {
     [parts[0]]: parts[1],
   };
 }
+
+const models_mapping = Deno.env.get("MODELS_MAPPING");
 export const MODELS_MAPPING: object | undefined =
-  env["MODELS_MAPPING"] && env["MODELS_MAPPING"].length > 0
-    ? env["MODELS_MAPPING"].split(",").reduce(mapModels, {})
+  models_mapping && models_mapping.length > 0
+    ? models_mapping.split(",").reduce(mapModels, {})
     : undefined;
