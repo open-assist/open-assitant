@@ -9,6 +9,7 @@ import {
   CreateMessageResponse,
   MessageStartEvent,
 } from "anthropic_schemas";
+import { now } from "$/utils/date.ts";
 
 const ChatCompletionRequestMessageToMessage =
   ChatCompletionRequestMessage.transform((message) => {
@@ -116,9 +117,10 @@ export const MessageStartEventToCreateChatCompletionStreamResponse =
             role,
             content: "",
           },
+          finish_reason: null,
         },
       ],
-      created: Date.now(),
+      created: now(),
       object: "chat.completion.chunk",
       system_fingerprint: "fp_open_assistant",
     } as CreateChatCompletionStreamResponseType;

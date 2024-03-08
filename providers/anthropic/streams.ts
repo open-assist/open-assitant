@@ -1,9 +1,15 @@
 import { type CreateChatCompletionStreamResponseType } from "openai_schemas";
 import { MessageStartEventToCreateChatCompletionStreamResponse } from "$/providers/anthropic/transforms.ts";
+import { now } from "$/utils/date.ts";
 
 const EVENT_REGEX = /^event:\s(\w+)$/m;
 const DATA_REGEX = /^data:\s([\w\W]+)/m;
-const ACCEPT_EVENTS = ["message_start", "content_block_delta", "message_delta"];
+const ACCEPT_EVENTS = [
+  "message_start",
+  "content_block_delta",
+  "message_delta",
+  "message_stop",
+];
 
 export class MessageTransformStream extends TransformStream {
   encoder: TextEncoder;
@@ -18,13 +24,17 @@ export class MessageTransformStream extends TransformStream {
         const events = chunkString.split("\n\n");
         for (const event of events) {
           let matches = event.match(EVENT_REGEX);
-          if (!matches) return;
+          if (!matches) continue;
 
           const [, eventName] = matches;
-          if (!ACCEPT_EVENTS.includes(eventName)) return;
+          if (!ACCEPT_EVENTS.includes(eventName)) continue;
+          if (eventName === "message_stop") {
+            controller.enqueue(this.encoder.encode("data: [DONE]\n\n"));
+            continue;
+          }
 
           matches = event.match(DATA_REGEX);
-          if (!matches) return;
+          if (!matches) continue;
 
           const [, dataJson] = matches;
           const data = JSON.parse(dataJson);
@@ -43,12 +53,13 @@ export class MessageTransformStream extends TransformStream {
                   {
                     index: 0,
                     delta: {
+                      role: "assistant",
                       content: data.delta.text,
                     },
                     finish_reason: null,
                   },
                 ],
-                created: Date.now(),
+                created: now(),
               };
               break;
             case "message_delta":
@@ -57,14 +68,17 @@ export class MessageTransformStream extends TransformStream {
                 choices: [
                   {
                     index: 0,
-                    delta: {},
+                    delta: {
+                      role: "assistant",
+                      content: "",
+                    },
                     finish_reason:
                       data.delta.stop_reason === "max_tokens"
                         ? "length"
                         : "stop",
                   },
                 ],
-                created: Date.now(),
+                created: now(),
               };
               break;
           }

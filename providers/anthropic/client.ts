@@ -35,7 +35,12 @@ export default class Client {
 
     if (request.stream) {
       const { readable, writable } = new MessageTransformStream(mappedModel);
-      response.body?.pipeTo(writable);
+      response.body?.pipeTo(writable).catch((e) => {
+        if ("" + e === "resource closed") {
+          return;
+        }
+        console.log(`[anthropic] resposne error: ${e}`);
+      });
       return readable;
     }
 
