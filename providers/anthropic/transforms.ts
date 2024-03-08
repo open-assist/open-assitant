@@ -59,10 +59,16 @@ export const CreateChatCompletionRequestToCreateMessageRequest =
         ChatCompletionRequestMessageToMessage.parse(m),
       ),
       metadata: user && { user_id: user },
-      stop_sequences: stop && (Array.isArray(stop) ? stop : [stop]),
+      stop_sequences:
+        stop && stop.length > 0
+          ? Array.isArray(stop)
+            ? stop
+            : [stop]
+          : undefined,
       system:
-        systemMessages.length > 0 &&
-        systemMessages.map((m) => m.content).join("\n"),
+        systemMessages.length > 0
+          ? systemMessages.map((m) => m.content).join("\n")
+          : undefined,
       max_tokens: max_tokens ?? 4096,
       temperature,
       top_p,
@@ -95,7 +101,7 @@ export const CreateMessageResponseToCreateChatCompletionResponse =
         completion_tokens: usage.output_tokens,
         total_tokens: (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0),
       },
-      created: Date.now(),
+      created: now(),
       object: "chat.completion",
       system_fingerprint: "fp_open_assistant",
     } as CreateChatCompletionResponseType;
