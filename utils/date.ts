@@ -6,3 +6,7 @@
 export function now(): number {
   return Math.floor(Date.now() / 1_000);
 }
+
+export function toTimestamp(value: string) {
+  return Math.floor(new Date(value).getTime() / 1_000);
+}

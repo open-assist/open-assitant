@@ -3,7 +3,7 @@ export const MODELS: string[] =
   models && models.length > 0 ? models.split(",") : [];
 
 function mapModels(pre: object, cur: string) {
-  const parts = cur.split(":");
+  const parts = cur.split("->");
   if (parts.length !== 2) {
     return pre;
   }
