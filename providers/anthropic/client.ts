@@ -6,20 +6,21 @@ import {
 import { MessageTransformStream } from "$/providers/anthropic/streams.ts";
 
 export default class Client {
-  static baseURL = "https://api.anthropic.com";
   static apiVersion = "v1";
-  static version = "2023-06-01";
 
   private static fetch(input: string, init?: RequestInit) {
-    return fetch(`${this.baseURL}/${this.apiVersion}${input}`, {
-      ...init,
-      headers: {
-        ...init?.headers,
-        "content-type": "application/json",
-        "anthropic-version": this.version,
-        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY") as string,
+    return fetch(
+      `${Deno.env.get("ANTHROPIC_API_URL")}/${this.apiVersion}${input}`,
+      {
+        ...init,
+        headers: {
+          ...init?.headers,
+          "content-type": "application/json",
+          "anthropic-version": Deno.env.get("ANTROPIC_VERSION") as string,
+          "x-api-key": Deno.env.get("ANTHROPIC_API_KEY") as string,
+        },
       },
-    });
+    );
   }
 
   public static async createChatCompletion(
