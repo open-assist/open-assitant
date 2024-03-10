@@ -12,8 +12,10 @@ const ACCEPT_EVENTS = [
 ];
 
 /**
- * A TransformStream that transforms the raw anthropic stream response into a CreateChatCompletionStreamResponseType object.
- * It parses the raw stream events and data, and constructs the response object accordingly.
+ * A TransformStream that transforms the raw anthropic stream
+ * response into a CreateChatCompletionStreamResponseType object.
+ * It parses the raw stream events and data, and constructs the
+ * response object accordingly.
  */
 export class MessageTransformStream extends TransformStream {
   encoder: TextEncoder;
@@ -24,7 +26,8 @@ export class MessageTransformStream extends TransformStream {
   /**
    * Constructs a new MessageTransformStream instance.
    *
-   * @param {string} [model] - Optional model override for the Anthropic response. If provided, the model property will be set to this value.
+   * @param {string} [model] - Optional model override for the anthropic response.
+   *   If provided, the model property will be set to this value.
    */
   constructor(model?: string) {
     super({

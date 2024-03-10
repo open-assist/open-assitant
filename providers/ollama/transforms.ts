@@ -10,9 +10,10 @@ import {
   ChatResponse,
   type ChatRequestType,
   type ChatMessageType,
-} from "./schemas.ts";
+} from "ollama_schemas";
 import { ulid } from "$std/ulid/mod.ts";
 import { toTimestamp } from "$/utils/date.ts";
+import { CHAT_COMPLETION_PREFIX } from "$/utils/constants.ts";
 
 export const ChatCompletionRequestMessageToChatMessage =
   ChatCompletionRequestMessage.transform((m) => {
@@ -40,7 +41,16 @@ export const ChatCompletionRequestMessageToChatMessage =
 
 export const CreateChatCompletionRequestToChatRequest =
   CreateChatCompletionRequest.transform((request) => {
-    const { model, messages, stream } = request;
+    const {
+      model,
+      messages,
+      stream,
+      seed,
+      stop,
+      temperature,
+      top_p,
+      response_format,
+    } = request;
     const supportMessages = messages.filter(
       (m) => !(m.role === "function" || m.role === "tool"),
     );
@@ -49,7 +59,14 @@ export const CreateChatCompletionRequestToChatRequest =
         ChatCompletionRequestMessageToChatMessage.parse(m),
       ),
       model,
+      format: response_format?.type === "json_object" ? "json" : undefined,
       stream: !stream ? false : true,
+      options: {
+        temperature,
+        seed,
+        stop: Array.isArray(stop) ? undefined : stop,
+        top_p,
+      },
     } as ChatRequestType;
   });
 
@@ -67,7 +84,7 @@ export const ChatResponseToCreateChatCompletionResponse =
         },
       ],
       created: toTimestamp(created_at),
-      id: ulid(),
+      id: `${CHAT_COMPLETION_PREFIX}-${ulid()}`,
       model,
       object: "chat.completion",
       usage: {

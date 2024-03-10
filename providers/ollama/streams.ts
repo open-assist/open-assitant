@@ -1,6 +1,7 @@
 import { type CreateChatCompletionStreamResponseType } from "openai_schemas";
 import { ChatResponseToCreateChatCompletionStreamResponse } from "$/providers/ollama/transforms.ts";
 import { ulid } from "$std/ulid/mod.ts";
+import { CHAT_COMPLETION_PREFIX } from "$/utils/constants.ts";
 
 /**
  * A TransformStream that transforms the raw ollama stream response into a
@@ -43,6 +44,6 @@ export class ChatTransformStream extends TransformStream {
     this.decoder = new TextDecoder();
     this.chunk = {} as CreateChatCompletionStreamResponseType;
     this.model = model;
-    this.id = ulid();
+    this.id = `${CHAT_COMPLETION_PREFIX}-${ulid()}`;
   }
 }
