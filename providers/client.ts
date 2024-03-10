@@ -3,6 +3,7 @@ import {
   CreateChatCompletionResponseType,
 } from "openai_schemas";
 import anthropic from "$/providers/anthropic/client.ts";
+import google from "$/providers/google/client.ts";
 import ollama from "$/providers/ollama/client.ts";
 import { getProvider } from "$/utils/provider.ts";
 import { InternalServerError } from "$/utils/errors.ts";
@@ -12,8 +13,9 @@ export default class Client {
     const provider = getProvider();
     switch (provider) {
       case "anthropic":
-      case "google":
         return anthropic;
+      case "google":
+        return google;
       case "ollama":
         return ollama;
       default:
