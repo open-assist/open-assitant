@@ -6,6 +6,10 @@ import {
 import { ChatTransformStream } from "$/providers/ollama/streams.ts";
 import { InternalServerError } from "$/utils/errors.ts";
 import { OLLAMA_API_URL } from "$/utils/constants.ts";
+import * as log from "$std/log/mod.ts";
+import { logRejectionReason } from "$/providers/log.ts";
+
+const LOG_TAG = "Ollama";
 
 export default class Client {
   /**
@@ -30,12 +34,7 @@ export default class Client {
 
     if (request.stream) {
       const { readable, writable } = new ChatTransformStream();
-      response.body?.pipeTo(writable).catch((e) => {
-        if ("" + e === "resource closed") {
-          return;
-        }
-        console.error(`[ollama] resposne error: ${e}`);
-      });
+      response.body?.pipeTo(writable).catch(logRejectionReason);
       return readable;
     }
 
@@ -53,8 +52,8 @@ export default class Client {
       (response) => {
         if (response.status >= 400) {
           response.json().then((body) => {
-            console.error(
-              `[ollama] client fetch with response status: ${response.status}, body: ${JSON.stringify(body)}`,
+            log.error(
+              `[${LOG_TAG}] client fetch with response status: ${response.status}, body: ${JSON.stringify(body)}`,
             );
           });
           throw new InternalServerError();

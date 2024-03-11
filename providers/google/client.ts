@@ -5,6 +5,7 @@ import {
   GenerateContentResponseToCreateChatCompletionResponse,
 } from "$/providers/google/transforms.ts";
 import { GenerateContentTransformStream } from "$/providers/google/streams.ts";
+import { logRejectionReason } from "$/providers/log.ts";
 
 export default class Client {
   static apiVersion = "v1beta";
@@ -30,10 +31,7 @@ export default class Client {
       const { writable, readable } = new GenerateContentTransformStream(
         mappedModel ?? request.model,
       );
-      response.body?.pipeTo(writable).catch((e) => {
-        if ("" + e === "resource closed") return;
-        console.error("[google] response error:", e);
-      });
+      response.body?.pipeTo(writable).catch(logRejectionReason);
       return readable;
     }
 

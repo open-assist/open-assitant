@@ -1,3 +1,5 @@
+export const LOG_LEVEL = "LOG_LEVEL";
+
 // the env var name of google ai api url
 export const GOOGLE_API_URL = "GOOGLE_API_URL";
 export const GOOGLE_API_KEY = "GOOGLE_API_KEY";

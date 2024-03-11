@@ -4,6 +4,7 @@ import {
   CreateMessageResponseToCreateChatCompletionResponse,
 } from "$/providers/anthropic/transforms.ts";
 import { MessageTransformStream } from "$/providers/anthropic/streams.ts";
+import { logRejectionReason } from "$/providers/log.ts";
 
 export default class Client {
   static apiVersion = "v1";
@@ -36,12 +37,7 @@ export default class Client {
 
     if (request.stream) {
       const { readable, writable } = new MessageTransformStream(mappedModel);
-      response.body?.pipeTo(writable).catch((e) => {
-        if ("" + e === "resource closed") {
-          return;
-        }
-        console.log(`[anthropic] resposne error: ${e}`);
-      });
+      response.body?.pipeTo(writable).catch(logRejectionReason);
       return readable;
     }
 
