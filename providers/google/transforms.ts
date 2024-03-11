@@ -6,10 +6,10 @@ import {
 } from "openai_schemas";
 import {
   Content,
+  FinishReason,
   GenerateContentResponse,
   type ContentType,
   type GenerateContentRequestType,
-  type FinishReasonType,
 } from "googleai_schemas";
 import {
   CHAT_COMPLETION_OBJECT,
@@ -18,6 +18,10 @@ import {
 } from "$/utils/constants.ts";
 import { now } from "$/utils/date.ts";
 import { ulid } from "$std/ulid/mod.ts";
+
+/**
+ * OpenAI's /chat/completions to GoogleAI's /models/id:generateContent
+ */
 
 export const ChatCompletionRequestMessageToContent =
   ChatCompletionRequestMessage.transform((message) => {
@@ -44,7 +48,7 @@ export const ContentToChatCompletionResponseMessage = Content.transform((c) => {
   const { parts } = c;
   return {
     role: "assistant",
-    content: parts.map((p) => p.text).join("\n"),
+    content: parts.map((p) => p.text).join(""),
   };
 });
 
@@ -84,20 +88,22 @@ export const CreateChatCompletionRequestToGenerateContentRequest =
     } as GenerateContentRequestType;
   });
 
-function convertFinishReason(finishReason?: FinishReasonType | null) {
-  switch (finishReason) {
-    case "MAX_TOKENS":
-      return "length";
-    case "SAFETY":
-    case "RECITATION":
-      return "content_filter";
-    case "STOP":
-    case "OTHER":
-    case "FINISH_REASON_UNSPECIFIED":
-    default:
-      return "stop";
-  }
-}
+export const FinishReasonGoogleToOpenAI = FinishReason.transform(
+  (finishReason) => {
+    switch (finishReason) {
+      case "MAX_TOKENS":
+        return "length";
+      case "SAFETY":
+      case "RECITATION":
+        return "content_filter";
+      case "STOP":
+      case "OTHER":
+      case "FINISH_REASON_UNSPECIFIED":
+      default:
+        return "stop";
+    }
+  },
+);
 
 export const GenerateContentResponseToCreateChatCompletionResponse =
   GenerateContentResponse.transform((response) => {
@@ -108,7 +114,8 @@ export const GenerateContentResponseToCreateChatCompletionResponse =
         const { content, finishReason, index } = c;
 
         return {
-          finish_reason: convertFinishReason(finishReason),
+          finish_reason:
+            finishReason && FinishReasonGoogleToOpenAI.parse(finishReason),
           index,
           message: ContentToChatCompletionResponseMessage.parse(content),
         };
@@ -127,7 +134,8 @@ export const GenerateContentResponseToChatCompletionChunkObject =
       choices: candidates.map((c) => {
         const { content, finishReason, index } = c;
         return {
-          finish_reason: convertFinishReason(finishReason),
+          finish_reason:
+            finishReason && FinishReasonGoogleToOpenAI.parse(finishReason),
           index,
           delta: {
             content: content.parts.map((p) => p.text).join(""),
