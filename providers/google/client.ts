@@ -1,7 +1,4 @@
-import {
-  CreateChatCompletionRequest,
-  CreateChatCompletionRequestType,
-} from "openai_schemas";
+import { type CreateChatCompletionRequestType } from "openai_schemas";
 import { GOOGLE_API_URL, GOOGLE_API_KEY } from "$/utils/constants.ts";
 import {
   CreateChatCompletionRequestToGenerateContentRequest,
