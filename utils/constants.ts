@@ -4,6 +4,8 @@ export const LOG_LEVEL = "LOG_LEVEL";
 export const ANTHROPIC_API_URL = "ANTHROPIC_API_URL";
 export const ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY";
 export const ANTHROPIC_VERSION = "ANTHROPIC_VERSION";
+export const DEFAULT_ANTHROPIC_API_URL = "https://api.anthropic.com";
+export const DEFAULT_ANTHROPIC_VERSION = "2023-06-01";
 
 // the env var name of google ai api url
 export const GOOGLE_API_URL = "GOOGLE_API_URL";

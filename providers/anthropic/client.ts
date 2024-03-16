@@ -1,3 +1,4 @@
+import * as log from "$std/log/mod.ts";
 import type { CreateChatCompletionRequestType } from "openai_schemas";
 import {
   CreateChatCompletionRequestToCreateMessageRequest,
@@ -10,23 +11,28 @@ import {
   ANTHROPIC_API_URL,
   ANTHROPIC_VERSION,
 } from "$/utils/constants.ts";
+import {
+  DEFAULT_ANTHROPIC_API_URL,
+  DEFAULT_ANTHROPIC_VERSION,
+} from "$/utils/constants.ts";
+import { logResponseError } from "$/providers/log.ts";
 
 export default class Client {
   static apiVersion = "v1";
 
   private static fetch(input: string, init?: RequestInit) {
-    return fetch(
-      `${Deno.env.get(ANTHROPIC_API_URL)}/${this.apiVersion}${input}`,
-      {
-        ...init,
-        headers: {
-          ...init?.headers,
-          "content-type": "application/json",
-          "anthropic-version": Deno.env.get(ANTHROPIC_VERSION) as string,
-          "x-api-key": Deno.env.get(ANTHROPIC_API_KEY) as string,
-        },
+    const url = Deno.env.get(ANTHROPIC_API_URL) ?? DEFAULT_ANTHROPIC_API_URL;
+    const version =
+      Deno.env.get(ANTHROPIC_VERSION) ?? DEFAULT_ANTHROPIC_VERSION;
+    return fetch(`${url}/${this.apiVersion}${input}`, {
+      ...init,
+      headers: {
+        ...init?.headers,
+        "content-type": "application/json",
+        "anthropic-version": version,
+        "x-api-key": Deno.env.get(ANTHROPIC_API_KEY) as string,
       },
-    );
+    }).then(logResponseError);
   }
 
   public static async createChatCompletion(
@@ -46,8 +52,8 @@ export default class Client {
       return readable;
     }
 
-    const completion = CreateMessageResponseToCreateChatCompletionResponse
-      .parse(
+    const completion =
+      CreateMessageResponseToCreateChatCompletionResponse.parse(
         await response.json(),
       );
     if (mappedModel) {
