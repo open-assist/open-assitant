@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ulid } from "$std/ulid/mod.ts";
 import { DbCommitError, NotFound } from "$/utils/errors.ts";
 import { type Meta } from "$/schemas/_base.ts";
+import { now } from "$/utils/date.ts";
 
 const DENO_KV_PATH_KEY = "DENO_KV_PATH";
 let path = undefined;
@@ -153,7 +154,7 @@ export class Repository {
     const value = {
       object: this.object,
       id: `${this.idPrefix}-${ulid()}`,
-      created_at: Date.now(),
+      created_at: now(),
       ...fields,
     } as T;
 
@@ -213,15 +214,31 @@ export class Repository {
     return value;
   }
 
-  static async destory(id: string, parentId?: string) {
+  static async destory(
+    id: string,
+    parentId?: string,
+    operation?: Deno.AtomicOperation,
+  ) {
+    let commit = true;
+    if (operation) {
+      commit = false;
+    } else {
+      operation = kv.atomic();
+    }
+
     const key = this.genKvKey(parentId, id);
-    const operation = kv.atomic().delete(key);
+    operation.delete(key);
 
     if (this.hasSecondaryKey) {
       const secondaryKey = this.genKvKey(undefined, id);
       operation.delete(secondaryKey);
     }
-    const { ok } = await operation.commit();
-    if (!ok) throw new DbCommitError();
+
+    if (commit) {
+      const { ok } = await operation.commit();
+      if (!ok) throw new DbCommitError();
+      return;
+    }
+    return { operation };
   }
 }

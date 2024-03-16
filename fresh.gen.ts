@@ -12,6 +12,8 @@ import * as $v1_middleware from "./routes/v1/_middleware.ts";
 import * as $v1_assistants_assistant_id_ from "./routes/v1/assistants/[assistant_id].ts";
 import * as $v1_assistants_index from "./routes/v1/assistants/index.ts";
 import * as $v1_chat_completions from "./routes/v1/chat/completions.ts";
+import * as $v1_files_file_id_ from "./routes/v1/files/[file_id].ts";
+import * as $v1_files_index from "./routes/v1/files/index.ts";
 import * as $v1_models_index from "./routes/v1/models/index.ts";
 import * as $v1_threads_thread_id_ from "./routes/v1/threads/[thread_id].ts";
 import * as $v1_threads_thread_id_messages_message_id_ from "./routes/v1/threads/[thread_id]/messages/[message_id].ts";
@@ -38,6 +40,8 @@ const manifest = {
     "./routes/v1/assistants/[assistant_id].ts": $v1_assistants_assistant_id_,
     "./routes/v1/assistants/index.ts": $v1_assistants_index,
     "./routes/v1/chat/completions.ts": $v1_chat_completions,
+    "./routes/v1/files/[file_id].ts": $v1_files_file_id_,
+    "./routes/v1/files/index.ts": $v1_files_index,
     "./routes/v1/models/index.ts": $v1_models_index,
     "./routes/v1/threads/[thread_id].ts": $v1_threads_thread_id_,
     "./routes/v1/threads/[thread_id]/messages/[message_id].ts":
