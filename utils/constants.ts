@@ -1,5 +1,10 @@
 export const LOG_LEVEL = "LOG_LEVEL";
 
+// the env var names of anthropic
+export const ANTHROPIC_API_URL = "ANTHROPIC_API_URL";
+export const ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY";
+export const ANTHROPIC_VERSION = "ANTHROPIC_VERSION";
+
 // the env var name of google ai api url
 export const GOOGLE_API_URL = "GOOGLE_API_URL";
 export const GOOGLE_API_KEY = "GOOGLE_API_KEY";
