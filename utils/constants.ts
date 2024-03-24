@@ -7,13 +7,6 @@ export const DEFAULT_FILE_DIR = "/tmp/assistant";
 // export const DEFAULT_FILE_SIZE_MAX = 512_000_000; // 512MB
 export const DEFAULT_ORG_FILES_SIZE_MAX = 100_000_000_000; // 100GB
 
-// the env var names of anthropic
-export const ANTHROPIC_API_URL = "ANTHROPIC_API_URL";
-export const ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY";
-export const ANTHROPIC_VERSION = "ANTHROPIC_VERSION";
-export const DEFAULT_ANTHROPIC_API_URL = "https://api.anthropic.com";
-export const DEFAULT_ANTHROPIC_VERSION = "2023-06-01";
-
 // the env var name of google ai api url
 export const GOOGLE_API_URL = "GOOGLE_API_URL";
 export const GOOGLE_API_KEY = "GOOGLE_API_KEY";

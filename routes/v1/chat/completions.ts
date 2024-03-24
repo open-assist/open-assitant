@@ -3,11 +3,12 @@ import {
   CreateChatCompletionRequest,
   type CreateChatCompletionResponseType,
 } from "openai_schemas";
-import Client from "$/providers/client.ts";
+import { get_client } from "$/llm/client.ts";
 import { MODELS_MAPPING } from "$/utils/model.ts";
 
 export const handler: Handlers<CreateChatCompletionResponseType | null> = {
   async POST(req: Request, _ctx: FreshContext) {
+    const Client = await get_client();
     const fields = CreateChatCompletionRequest.parse(await req.json());
     let mappedModel;
     if (MODELS_MAPPING && Object.hasOwn(MODELS_MAPPING, fields.model)) {

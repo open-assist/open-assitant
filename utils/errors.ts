@@ -1,3 +1,15 @@
+export class NotImplemented extends Error {
+  constructor() {
+    super(`Method is not implemented`);
+  }
+}
+
+export class ConfigurationNotSet extends Error {
+  constructor(name: string) {
+    super(`The configuration(${name}) is not set.`);
+  }
+}
+
 export interface ProblemDetail {
   type?: string;
   title?: string;
@@ -33,9 +45,11 @@ export class Unauthorized extends Error {
 export class NotFound extends Error {
   instance: string | undefined = undefined;
 
-  constructor(
-    params: { message?: string; options?: ErrorOptions; instance?: string },
-  ) {
+  constructor(params: {
+    message?: string;
+    options?: ErrorOptions;
+    instance?: string;
+  }) {
     super(params.message, params.options);
     this.message = params.message || "Not Found";
     this.instance = params.instance;
@@ -63,8 +77,7 @@ export class TooManyRequests extends Error {}
 /**
  * status: 500
  */
-export class InternalServerError extends Error {
-}
+export class InternalServerError extends Error {}
 
 export class DbCommitError extends Error {
   constructor(message?: string, options?: ErrorOptions) {

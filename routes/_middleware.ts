@@ -9,6 +9,7 @@ import {
   UnprocessableContent,
 } from "$/utils/errors.ts";
 import { ZodError } from "zod";
+import * as log from "$std/log/mod.ts";
 
 export interface State {
   organization: string;
@@ -31,6 +32,8 @@ export function handler(req: Request, ctx: FreshContext) {
   return ctx
     .next()
     .catch((error: Error) => {
+      log.error(error);
+
       const problemDetail: ProblemDetail = {
         type: "about:blank",
         status: 500,

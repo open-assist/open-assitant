@@ -1,5 +1,6 @@
 import {
   CreateChatCompletionRequest,
+  CreateChatCompletionResponse,
   ChatCompletionRequestMessage,
   ChatCompletionRequestMessageContentPartType,
 } from "openai_schemas";
@@ -12,6 +13,7 @@ import {
 import { XML } from "$/utils/xml.ts";
 import * as log from "$std/log/mod.ts";
 import { TOOL_STOP } from "$/consts/llm.ts";
+import { now } from "$/utils/date.ts";
 
 export const TextContent = z.object({
   type: z.enum(["text"]).default("text"),
@@ -246,4 +248,32 @@ export const CompletionRequestToMessageRequest =
       top_p,
       stream,
     };
+  });
+
+export const CreateMessageResponseToCreateChatCompletionResponse =
+  CreateMessageResponse.transform((response) => {
+    const { content, role, stop_reason, usage, ...rest } = response;
+    return CreateChatCompletionResponse.parse({
+      ...rest,
+      choices: [
+        {
+          logprobs: null,
+          index: 0,
+          message: {
+            role,
+            content: content.map((c) => c.text).join("\n"),
+          },
+          finish_reason:
+            stop_reason && stop_reason === "max_tokens" ? "length" : "stop",
+        },
+      ],
+      usage: usage && {
+        prompt_tokens: usage.input_tokens,
+        completion_tokens: usage.output_tokens,
+        total_tokens: (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0),
+      },
+      created: now(),
+      object: "chat.completion",
+      system_fingerprint: "fp_open_assistant",
+    });
   });
