@@ -1,34 +1,29 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { MODELS, MODELS_MAPPING } from "$/utils/model.ts";
-import type { ModelType } from "openai_schemas";
-import { getProvider } from "$/utils/provider.ts";
+import { ModelObject, ListModelsResponse } from "$/schemas/openai/models.ts";
+import { getProvider } from "$/utils/llm.ts";
+import { getModels, getModelsMapping } from "$/utils/llm.ts";
 
-export const handler: Handlers<ModelType | null> = {
+export const handler: Handlers<ModelObject | null> = {
   GET(_req: Request, _ctx: FreshContext) {
-    let models: Partial<ModelType>[];
-    if (MODELS_MAPPING) {
-      models = Object.keys(MODELS_MAPPING).map(
-        (m) =>
-          ({
-            object: "model",
-            id: m,
-            owned_by: "openai",
-          }) as ModelType,
+    let models: ModelObject[];
+    const modelsMapping = getModelsMapping();
+    if (modelsMapping) {
+      models = Object.keys(modelsMapping).map((id) =>
+        ModelObject.parse({ id }),
       );
     } else {
-      models = MODELS.map(
-        (m) =>
-          ({
-            object: "model",
-            id: m,
-            owned_by: getProvider(),
-          }) as ModelType,
+      models = getModels().map((id) =>
+        ModelObject.parse({
+          id,
+          owned_by: getProvider(),
+        }),
       );
     }
 
-    return Response.json({
-      object: "list",
-      data: models,
-    });
+    return Response.json(
+      ListModelsResponse.parse({
+        data: models,
+      }),
+    );
   },
 };

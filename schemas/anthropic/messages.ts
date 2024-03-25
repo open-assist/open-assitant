@@ -14,6 +14,7 @@ import { XML } from "$/utils/xml.ts";
 import * as log from "$std/log/mod.ts";
 import { TOOL_STOP } from "$/consts/llm.ts";
 import { now } from "$/utils/date.ts";
+import { genSystemFingerprint } from "$/utils/llm.ts";
 
 export const TextContent = z.object({
   type: z.enum(["text"]).default("text"),
