@@ -1,14 +1,14 @@
 import { LLM_PROVIDER } from "$/consts/envs.ts";
 import { ANTHROPIC } from "$/consts/llm.ts";
-import { EnvNotSet } from "$/utils/errors.ts";
+import { getEnv } from "$/utils/env.ts";
 
-function getModule(provider: string) {
+function getModule(provider?: string) {
   switch (provider) {
     case ANTHROPIC:
       return import("$/providers/llm/anthropic.ts");
     default:
-      throw new Error(`Unsupported LLM provider: ${provider}.`, {
-        cause: `Try one of the following: ${ANTHROPIC}.`,
+      throw new Error(`Try one of the following: ${ANTHROPIC}.`, {
+        cause: `Unsupported LLM provider: ${provider}.`,
       });
   }
 }
@@ -30,9 +30,5 @@ function getModule(provider: string) {
  * ```
  */
 export async function getClient() {
-  const provider = Deno.env.get(LLM_PROVIDER);
-  if (!provider) {
-    throw new EnvNotSet(LLM_PROVIDER);
-  }
-  return (await getModule(provider)).default;
+  return (await getModule(getEnv(LLM_PROVIDER))).default;
 }
