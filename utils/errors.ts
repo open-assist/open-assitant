@@ -4,7 +4,7 @@ export class NotImplemented extends Error {
   }
 }
 
-export class ConfigurationNotSet extends Error {
+export class EnvNotSet extends Error {
   constructor(name: string) {
     super(`The configuration(${name}) is not set.`);
   }

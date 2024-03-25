@@ -14,7 +14,7 @@ import {
   CompletionRequestToMessageRequest,
   CreateMessageResponseToCreateChatCompletionResponse,
 } from "$/schemas/anthropic/messages.ts";
-import { ConfigurationNotSet } from "$/utils/errors.ts";
+import { EnvNotSet } from "$/utils/errors.ts";
 
 export default class Anthropic extends Base {
   static apiVersion = "v1";
@@ -22,7 +22,7 @@ export default class Anthropic extends Base {
   protected static _fetch(input: string, init?: RequestInit) {
     const apiKey = Deno.env.get(ANTHROPIC_API_KEY);
     if (!apiKey) {
-      throw new ConfigurationNotSet(ANTHROPIC_API_KEY);
+      throw new EnvNotSet(ANTHROPIC_API_KEY);
     }
     const url = Deno.env.get(ANTHROPIC_API_URL) ?? DEFAULT_ANTHROPIC_API_URL;
     const version =

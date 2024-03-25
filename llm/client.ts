@@ -1,6 +1,6 @@
 import { LLM_PROVIDER } from "$/consts/envs.ts";
 import { ANTHROPIC } from "$/consts/llm.ts";
-import { ConfigurationNotSet } from "$/utils/errors.ts";
+import { EnvNotSet } from "$/utils/errors.ts";
 
 function get_module(provider: string) {
   switch (provider) {
@@ -16,7 +16,7 @@ function get_module(provider: string) {
 export async function get_client() {
   const provider = Deno.env.get(LLM_PROVIDER);
   if (!provider) {
-    throw new ConfigurationNotSet(LLM_PROVIDER);
+    throw new EnvNotSet(LLM_PROVIDER);
   }
   return (await get_module(provider)).default;
 }

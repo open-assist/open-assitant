@@ -1,5 +1,5 @@
 import { LLM_PROVIDER, LLM_MODELS, LLM_MODELS_MAPPING } from "$/consts/envs.ts";
-import { ConfigurationNotSet } from "$/utils/errors.ts";
+import { EnvNotSet } from "$/utils/errors.ts";
 
 /**
  * Retrieves the provider from the environment variable.
@@ -12,13 +12,13 @@ import { ConfigurationNotSet } from "$/utils/errors.ts";
  * console.log(provider); // output: 'openai'
  * ```
  *
- * @throws {ConfigurationNotSet} If the environment variable is not set.
+ * @throws {EnvNotSet} If the environment variable is not set.
  * @returns The provider string.
  */
 export function getProvider() {
   const provider = Deno.env.get(LLM_PROVIDER);
   if (!provider) {
-    throw new ConfigurationNotSet(LLM_PROVIDER);
+    throw new EnvNotSet(LLM_PROVIDER);
   }
   return provider;
 }
@@ -33,12 +33,12 @@ export function getProvider() {
  * getModels(); // output: ['model1', 'model2', ...]
  * ```
  *
- * @throws {ConfigurationNotSet} If the environment variable is not set.
+ * @throws {EnvNotSet} If the environment variable is not set.
  * @returns The list of available models.
  */
 export function getModels() {
   const models = Deno.env.get(LLM_MODELS);
-  if (!models) throw new ConfigurationNotSet(LLM_MODELS);
+  if (!models) throw new EnvNotSet(LLM_MODELS);
 
   return models.split(",");
 }

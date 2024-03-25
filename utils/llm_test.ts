@@ -7,7 +7,7 @@ import {
   getModelsMapping,
   getProvider,
 } from "$/utils/llm.ts";
-import { ConfigurationNotSet } from "$/utils/errors.ts";
+import { EnvNotSet } from "$/utils/errors.ts";
 
 describe("genSystemFingerprint", () => {
   it("returns a string matching the expected format", async () => {
@@ -33,7 +33,7 @@ describe("getProvider", () => {
 
   it("throws erorr when env var is not set", () => {
     Deno.env.delete(LLM_PROVIDER);
-    assertThrows(() => getProvider(), ConfigurationNotSet, LLM_PROVIDER);
+    assertThrows(() => getProvider(), EnvNotSet, LLM_PROVIDER);
   });
 });
 
@@ -54,7 +54,7 @@ describe("getModels", () => {
 
   it("throws error when env var is not set", () => {
     Deno.env.delete(LLM_MODELS);
-    assertThrows(() => getModels(), ConfigurationNotSet, LLM_MODELS);
+    assertThrows(() => getModels(), EnvNotSet, LLM_MODELS);
   });
 });
 
