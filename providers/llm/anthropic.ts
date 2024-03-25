@@ -14,7 +14,9 @@ import {
   CompletionRequestToMessageRequest,
   CreateMessageResponseToCreateChatCompletionResponse,
 } from "$/schemas/anthropic/messages.ts";
+import { MessageToChunkStream } from "$/schemas/anthropic/streaming_messages.ts";
 import { EnvNotSet } from "$/utils/errors.ts";
+import { logRejectionReason } from "$/utils/log.ts";
 
 export default class Anthropic extends Base {
   static apiVersion = "v1";
@@ -47,11 +49,11 @@ export default class Anthropic extends Base {
       body: JSON.stringify(CompletionRequestToMessageRequest.parse(request)),
     });
 
-    // if (request.stream) {
-    //   const { readable, writable } = new MessageTransformStream(mappedModel);
-    //   response.body?.pipeTo(writable).catch(logRejectionReason);
-    //   return readable;
-    // }
+    if (request.stream) {
+      const { readable, writable } = new MessageToChunkStream(mappedModel);
+      response.body?.pipeTo(writable).catch(logRejectionReason);
+      return readable;
+    }
 
     const completion =
       CreateMessageResponseToCreateChatCompletionResponse.parse(

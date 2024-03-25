@@ -14,7 +14,6 @@ import { XML } from "$/utils/xml.ts";
 import * as log from "$std/log/mod.ts";
 import { TOOL_STOP } from "$/consts/llm.ts";
 import { now } from "$/utils/date.ts";
-import { genSystemFingerprint } from "$/utils/llm.ts";
 
 export const TextContent = z.object({
   type: z.enum(["text"]).default("text"),
@@ -60,8 +59,8 @@ export const CreateMessageRequest = z.object({
 export type CreateMessageRequest = z.infer<typeof CreateMessageRequest>;
 
 export const MessageUsage = z.object({
-  input_tokens: z.number().optional(),
-  output_tokens: z.number().optional(),
+  input_tokens: z.number(),
+  output_tokens: z.number(),
 });
 export type MessageUsage = z.infer<typeof MessageUsage>;
 
@@ -275,6 +274,5 @@ export const CreateMessageResponseToCreateChatCompletionResponse =
       },
       created: now(),
       object: "chat.completion",
-      system_fingerprint: "fp_open_assistant",
     });
   });

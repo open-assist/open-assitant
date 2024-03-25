@@ -26,7 +26,7 @@ export const TOOLS_PROMPT = `\n\n# Tools
 
 In this environment you have access to a set of tools you can use to answer the user's question.
 You may call them like this:
-<tool_calls>
+<calls>
 <tool_call>
 <type>$TOOL_TYPE</type>
 <$TOOL_TYPE>
@@ -38,9 +38,10 @@ You may call them like this:
 </$TOOL_TYPE>
 </tool_call>
 ...
-</tool_calls>
+</calls>
 
-If need call multiple tools, put all of them in <tool_calls></tool_calls> tag.`;
+- If need call tool, your response must start with <calls>.
+- If need call multiple tools, put all of them in <calls></calls> tag.`;
 
 export const CODE_INTERPRETER_TOOLS_PROMPT = `\n\n## Code Interpreter Tools
 
