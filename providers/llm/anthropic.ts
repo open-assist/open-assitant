@@ -1,4 +1,4 @@
-import { Base } from "$/llm/base.ts";
+import { Base } from "$/providers/llm/base.ts";
 import {
   ANTHROPIC_API_URL,
   ANTHROPIC_VERSION,
