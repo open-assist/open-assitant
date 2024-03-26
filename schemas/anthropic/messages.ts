@@ -14,6 +14,8 @@ import { XML } from "$/utils/xml.ts";
 import * as log from "$std/log/mod.ts";
 import { TOOL_STOP } from "$/consts/llm.ts";
 import { now } from "$/utils/date.ts";
+import { ulid } from "$std/ulid/mod.ts";
+import { ChatCompletionFunctionToolCall } from "$/schemas/openai/chat.ts";
 
 export const TextContent = z.object({
   type: z.enum(["text"]).default("text"),
@@ -219,8 +221,7 @@ export const CompletionRequestToMessageRequest =
           arrayNodeName: "tool",
           format: true,
         });
-        log;
-        system = `${system}${TOOLS_PROMPT}${FUNCTION_TOOLS_PROMPT}${prompt}`;
+        system = `${system}${TOOLS_PROMPT}${FUNCTION_TOOLS_PROMPT}\n<tools>\n${prompt}</tools>`;
       }
       if (messages.length > 0) {
         system = `${system}${USER_PROMPT}${messages.join("\n")}`;
@@ -250,23 +251,51 @@ export const CompletionRequestToMessageRequest =
     };
   });
 
+export function parseXmlToFunctionToolCalls(xml: string) {
+  const parts = xml.split("<calls>");
+  const calls = XML.parse(parts[parts.length - 1]).tool_call;
+  log.debug(`calls: ${JSON.stringify(calls)}`);
+  const toolCalls = Array.isArray(calls) ? calls : [calls];
+  return toolCalls.map(
+    // deno-lint-ignore no-explicit-any
+    (c: any, index: number) => {
+      const {
+        function: { name, parameters },
+      } = c;
+      return {
+        type: "function",
+        function: {
+          name,
+          arguments: JSON.stringify(parameters),
+        },
+        id: `call-${ulid()}`,
+        index,
+      } as ChatCompletionFunctionToolCall;
+    },
+  );
+}
+
 export const CreateMessageResponseToCreateChatCompletionResponse =
   CreateMessageResponse.transform((response) => {
     const { content, role, stop_reason, usage, ...rest } = response;
+    const finish_reason =
+      stop_reason && stop_reason === "max_tokens" ? "length" : "stop";
     return CreateChatCompletionResponse.parse({
       ...rest,
-      choices: [
-        {
+      choices: content.map((c, index) => {
+        const parts = c.text.split("<calls>");
+        return {
+          index,
+          finish_reason,
           logprobs: null,
-          index: 0,
           message: {
             role,
-            content: content.map((c) => c.text).join("\n"),
+            content: parts[0],
+            tool_calls:
+              parts.length === 2 && parseXmlToFunctionToolCalls(parts[1]),
           },
-          finish_reason:
-            stop_reason && stop_reason === "max_tokens" ? "length" : "stop",
-        },
-      ],
+        };
+      }),
       usage: usage && {
         prompt_tokens: usage.input_tokens,
         completion_tokens: usage.output_tokens,
