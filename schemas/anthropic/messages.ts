@@ -219,8 +219,7 @@ export const CompletionRequestToMessageRequest =
           arrayNodeName: "tool",
           format: true,
         });
-        log;
-        system = `${system}${TOOLS_PROMPT}${FUNCTION_TOOLS_PROMPT}${prompt}`;
+        system = `${system}${TOOLS_PROMPT}${FUNCTION_TOOLS_PROMPT}\n<tools>\n${prompt}</tools>`;
       }
       if (messages.length > 0) {
         system = `${system}${USER_PROMPT}${messages.join("\n")}`;

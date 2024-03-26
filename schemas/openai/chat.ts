@@ -26,6 +26,9 @@ export const ChatCompletionFunctionToolCall = z.object({
     arguments: z.string(),
   }),
 });
+export type ChatCompletionFunctionToolCall = z.infer<
+  typeof ChatCompletionFunctionToolCall
+>;
 
 export const ChatCompletionChunkChoice = z.object({
   delta: z

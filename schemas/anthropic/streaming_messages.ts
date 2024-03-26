@@ -3,8 +3,19 @@ import { StopReason, MessageUsage } from "$/schemas/anthropic/messages.ts";
 import {
   ChatCompletionChunkObject,
   ChatCompletionChunkChoice,
+  ChatCompletionFunctionToolCall,
 } from "$/schemas/openai/chat.ts";
 import { now } from "$/utils/date.ts";
+import { XML } from "$/utils/xml.ts";
+import { ulid } from "$std/ulid/mod.ts";
+
+const MESSAGE_START = "message_start";
+const MESSAGE_DETLA = "message_delta";
+const MESSAGE_STOP = "message_stop";
+
+const CONTENT_BLOCK_START = "content_block_start";
+const CONTENT_BLOCK_DELTA = "content_block_delta";
+const CONTENT_BLOCK_STOP = "content_block_stop";
 
 export const MessageStartEvent = z.object({
   type: z.enum(["message_start"]),
@@ -54,6 +65,12 @@ export const ContentBlockDeltaEvent = z.object({
 });
 export type ContentBlockDeltaEvent = z.infer<typeof ContentBlockDeltaEvent>;
 
+export const ContentBlockStopEvent = z.object({
+  type: z.enum([CONTENT_BLOCK_STOP]).default(CONTENT_BLOCK_STOP),
+  index: z.number().int().min(0),
+});
+export type ContentBlockStopEvent = z.infer<typeof ContentBlockStopEvent>;
+
 const MessageStartEventToChatCompletionChunkObject =
   MessageStartEvent.transform((event) => {
     const { message } = event;
@@ -63,8 +80,8 @@ const MessageStartEventToChatCompletionChunkObject =
     });
   });
 
-const ContentBlockDeltaEventToChatCompletionChunkChioce =
-  ContentBlockDeltaEvent.transform((event) => {
+const ContentBlockDeltaEventToChioce = ContentBlockDeltaEvent.transform(
+  (event) => {
     const {
       index,
       delta: { text },
@@ -75,25 +92,32 @@ const ContentBlockDeltaEventToChatCompletionChunkChioce =
         content: text,
       },
     });
-  });
+  },
+);
 
-const MessageDeltaEventToChatCompletionChunkChoice =
-  MessageDeltaEvent.transform((event) => {
-    const {
-      delta: { stop_reason },
-    } = event;
-    return ChatCompletionChunkChoice.parse({
-      finish_reason: stop_reason === "max_tokens" ? "length" : "stop",
-    });
+const ContentBlockStopEventToChoice = ContentBlockStopEvent.transform(
+  (event) => {
+    return ChatCompletionChunkChoice.parse(event);
+  },
+);
+
+const MessageDeltaEventToChoice = MessageDeltaEvent.transform((event) => {
+  const {
+    delta: { stop_reason },
+  } = event;
+  return ChatCompletionChunkChoice.parse({
+    finish_reason: stop_reason === "max_tokens" ? "length" : "stop",
   });
+});
 
 const EVENT_REGEX = /^event:\s(\w+)$/m;
 const DATA_REGEX = /^data:\s([\w\W]+)/m;
+
 const ACCEPT_EVENTS = [
-  "message_start",
-  "content_block_delta",
-  "message_delta",
-  "message_stop",
+  MESSAGE_START,
+  CONTENT_BLOCK_DELTA,
+  MESSAGE_DETLA,
+  MESSAGE_STOP,
 ];
 
 /**
@@ -107,6 +131,8 @@ export class MessageToChunkStream extends TransformStream {
   decoder: TextDecoder;
   chunk: ChatCompletionChunkObject;
   model: string | undefined;
+  previousEvent: string | undefined;
+  callResponse: boolean;
 
   /**
    * Constructs a new MessageTransformStream instance.
@@ -128,6 +154,7 @@ export class MessageToChunkStream extends TransformStream {
 
           if (eventName === "message_stop") {
             controller.enqueue(this.encoder.encode("data: [DONE]\n\n"));
+            this.previousEvent = eventName;
             continue;
           }
 
@@ -140,35 +167,63 @@ export class MessageToChunkStream extends TransformStream {
             this.chunk =
               MessageStartEventToChatCompletionChunkObject.parse(data);
             if (this.model) this.chunk.model = this.model;
+            this.previousEvent = data.type;
             continue;
+          } else if (data.type === CONTENT_BLOCK_DELTA) {
+            const choice = ContentBlockDeltaEventToChioce.parse(data);
+            if (this.callResponse) {
+              this.chunk.choices[0].delta.content = `${this.chunk.choices[0].delta.content}${choice.delta.content}`;
+            } else {
+              this.chunk.choices = [
+                {
+                  ...this.chunk.choices[0],
+                  ...choice,
+                },
+              ];
+              this.chunk.created = now();
+              controller.enqueue(
+                this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`),
+              );
+            }
+
+            if (
+              this.previousEvent === MESSAGE_START &&
+              ["<calls", "<scratchpad"].includes(choice.delta.content as string)
+            ) {
+              this.callResponse = true;
+            }
+          } else if (data.type === CONTENT_BLOCK_STOP && this.callResponse) {
+            const xml = `${this.chunk.choices[0].delta.content}</calls>`;
+            const calls = XML.parse(xml);
+            const toolCalls = Array.isArray(calls.tool_call)
+              ? calls.tool_call
+              : [calls.tool_call];
+            this.chunk.choices[0].delta.tool_calls = toolCalls.map(
+              (c: ChatCompletionFunctionToolCall, index: number) => ({
+                ...c,
+                id: `call-${ulid()}`,
+                index,
+              }),
+            );
+            this.chunk.choices[0].delta.content = null;
+            controller.enqueue(
+              this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`),
+            );
+            this.callResponse = false;
+          } else if (data.type === MESSAGE_DETLA) {
+            this.chunk.choices = [
+              {
+                ...this.chunk.choices[0],
+                ...MessageDeltaEventToChoice.parse(data),
+              },
+            ];
+            this.chunk.created = now();
+            controller.enqueue(
+              this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`),
+            );
           }
 
-          switch (data.type) {
-            case "content_block_delta":
-              this.chunk = {
-                ...this.chunk,
-                choices: [
-                  ContentBlockDeltaEventToChatCompletionChunkChioce.parse(data),
-                ],
-                created: now(),
-              };
-              break;
-            case "message_delta":
-              this.chunk = {
-                ...this.chunk,
-                choices: [
-                  {
-                    ...this.chunk.choices[0],
-                    ...MessageDeltaEventToChatCompletionChunkChoice.parse(data),
-                  },
-                ],
-                created: now(),
-              };
-              break;
-          }
-          controller.enqueue(
-            this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`),
-          );
+          this.previousEvent = data.type;
         }
       },
     });
@@ -177,5 +232,6 @@ export class MessageToChunkStream extends TransformStream {
     this.decoder = new TextDecoder();
     this.chunk = {} as ChatCompletionChunkObject;
     this.model = model;
+    this.callResponse = false;
   }
 }
