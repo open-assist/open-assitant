@@ -9,10 +9,10 @@ import {
   DEFAULT_ANTHROPIC_VERSION,
 } from "$/consts/llm.ts";
 import { logResponseError } from "$/utils/log.ts";
-import { CreateChatCompletionRequestType } from "openai_schemas";
+import { CreateChatCompletionRequest } from "@open-schemas/zod/openai";
 import {
   CompletionRequestToMessageRequest,
-  CreateMessageResponseToCreateChatCompletionResponse,
+  CreateMessageResponseToChatCompletionObject,
 } from "$/schemas/anthropic/messages.ts";
 import { MessageToChunkStream } from "$/schemas/anthropic/streaming_messages.ts";
 import { EnvNotSet } from "$/utils/errors.ts";
@@ -41,7 +41,7 @@ export default class Anthropic extends Base {
   }
 
   static async createChatCompletion(
-    request: CreateChatCompletionRequestType,
+    request: CreateChatCompletionRequest,
     mappedModel?: string,
   ) {
     const response = await this._fetch("/messages", {
@@ -56,7 +56,7 @@ export default class Anthropic extends Base {
     }
 
     const completion =
-      CreateMessageResponseToCreateChatCompletionResponse.parse(
+      await CreateMessageResponseToChatCompletionObject.parseAsync(
         await response.json(),
       );
     if (mappedModel) {

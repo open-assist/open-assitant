@@ -1,6 +1,6 @@
 import { z } from "zod";
 import * as log from "$std/log/mod.ts";
-import { StopReason, MessageUsage } from "$/schemas/anthropic/messages.ts";
+import { StopReason, MessageUsage } from "@open-schemas/zod/anthropic";
 import {
   ChatCompletionChunkObject,
   ChatCompletionChunkChoice,

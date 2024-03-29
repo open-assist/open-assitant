@@ -1,8 +1,8 @@
 import { NotImplemented } from "$/utils/errors.ts";
 import {
-  CreateChatCompletionRequestType,
-  CreateChatCompletionResponseType,
-} from "openai_schemas";
+  CreateChatCompletionRequest,
+  ChatCompletionObject,
+} from "@open-schemas/zod/openai";
 
 /**
  * Base class for language model providers.
@@ -44,9 +44,9 @@ export class Base {
    * @throws {NotImplemented} If the method is not implemented.
    */
   static createChatCompletion(
-    _request: CreateChatCompletionRequestType,
+    _request: CreateChatCompletionRequest,
     _mappedModel?: string,
-  ): Promise<CreateChatCompletionResponseType | ReadableStream> {
+  ): Promise<ChatCompletionObject | ReadableStream> {
     throw new NotImplemented("Base.createChatCompletion");
   }
 }
