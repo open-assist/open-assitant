@@ -1,4 +1,4 @@
-import { assertExists } from "$std/assert/mod.ts";
+import { assertExists } from "@std/assert";
 import { describe, it } from "$std/testing/bdd.ts";
 import {
   MODEL_KNOWLEDGE_CUTOFF,

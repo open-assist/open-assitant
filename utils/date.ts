@@ -1,12 +1,18 @@
 /**
  * Returns the current Unix timestamp (the number of seconds since January 1, 1970 UTC).
  *
- * @returns {number} The current Unix timestamp.
+ * @returns The current Unix timestamp.
  */
 export function now(): number {
   return Math.floor(Date.now() / 1_000);
 }
 
+/**
+ * Converts a date string to a Unix timestamp.
+ *
+ * @param value - The date string to convert.
+ * @returns The Unix timestamp corresponding to the given date string.
+ */
 export function toTimestamp(value: string) {
   return Math.floor(new Date(value).getTime() / 1_000);
 }
@@ -14,8 +20,8 @@ export function toTimestamp(value: string) {
 /**
  * Formats a date as a string in the format "YYYY-MM-DD".
  *
- * @param {Date} date - The date to format.
- * @returns {string} The formatted date string.
+ * @param date - The date to format.
+ * @returns The formatted date string.
  */
 export function format(date: Date) {
   const year = date.getFullYear();

@@ -1,5 +1,5 @@
 import { XML } from "$/utils/xml.ts";
-import { assertEquals } from "$std/assert/mod.ts";
+import { assertEquals } from "@std/assert";
 
 const obj = [
   {
@@ -17,8 +17,7 @@ const obj = [
           format: {
             type: "string",
             enum: ["celsius", "fahrenheit"],
-            description:
-              "The temperature unit to use. Infer this from the users location.",
+            description: "The temperature unit to use. Infer this from the users location.",
           },
         },
         required: ["location", "format"],
@@ -40,8 +39,7 @@ const obj = [
           format: {
             type: "string",
             enum: ["celsius", "fahrenheit"],
-            description:
-              "The temperature unit to use. Infer this from the users location.",
+            description: "The temperature unit to use. Infer this from the users location.",
           },
           num_days: {
             type: "integer",
@@ -109,10 +107,7 @@ const xml = `<tool>
 `;
 
 Deno.test("XML.strigify", () => {
-  assertEquals(
-    XML.stringify(obj, { arrayNodeName: "tool", format: true }),
-    xml,
-  );
+  assertEquals(XML.stringify(obj, { arrayNodeName: "tool", format: true }), xml);
 });
 
 Deno.test("XML.parse", () => {

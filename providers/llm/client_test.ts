@@ -1,5 +1,5 @@
 import { describe, it, afterEach } from "$std/testing/bdd.ts";
-import { assertEquals, assertMatch } from "$std/assert/mod.ts";
+import { assertEquals, assertMatch } from "@std/assert";
 import { LLM_PROVIDER } from "$/consts/envs.ts";
 import { getClient } from "$/providers/llm/client.ts";
 import { EnvNotSet } from "$/utils/errors.ts";

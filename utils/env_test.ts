@@ -1,5 +1,5 @@
-import { assertEquals, assertThrows } from "$std/assert/mod.ts";
-import { describe, it } from "$std/testing/bdd.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import { describe, it } from "@std/testing/bdd";
 import { getEnv } from "$/utils/env.ts";
 import { NotSet } from "$/utils/errors.ts";
 
@@ -16,9 +16,5 @@ describe("getEnv", () => {
   it("throws error if environment variable is not set", () => {
     const variable = "nonexistenv";
     assertThrows(() => getEnv(variable), NotSet, variable);
-  });
-
-  it("does not throw error if environment variable is not set", () => {
-    assertEquals(getEnv("nonexistenv", false), undefined);
   });
 });

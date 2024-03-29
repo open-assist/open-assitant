@@ -1,4 +1,4 @@
-import { assertExists } from "$std/assert/mod.ts";
+import { assertExists } from "@std/assert";
 import {
   ASSISTANT_PROMPT,
   MULTIMODAL_MODEL_PROMPT,
