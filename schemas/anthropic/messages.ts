@@ -218,18 +218,19 @@ export function parseXmlToFunctionToolCalls(xml: string) {
  * @returns The converted FinishReason.
  */
 export function convertStopReasonToFinishReason(
-  reason: StopReason,
+  reason?: StopReason | null,
   sequence?: string | null,
-): FinishReason {
+): FinishReason | null | undefined {
+  if (!reason) return reason;
+
   switch (reason) {
     case "max_tokens":
       return "length";
-    case "end_turn":
-      return "stop";
     case "stop_sequence":
       return TOOL_STOP === sequence ? "tool_calls" : "stop";
+    case "end_turn":
     default:
-      return "content_filter";
+      return "stop";
   }
 }
 
@@ -244,7 +245,7 @@ export const CreateMessageResponseToChatCompletionObject =
     return ChatCompletionObject.parse({
       ...rest,
       id: `${CHAT_COMPLETION_PREFIX}-${ulid()}`,
-      choices: content.map((c, index) => {
+      choices: content.map((c, index: number) => {
         const parts = c.text.split("<calls>");
         const tool_calls =
           parts.length === 2
