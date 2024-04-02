@@ -1,4 +1,3 @@
-export const LOG_LEVEL = "LOG_LEVEL";
 export const FILE_DIR = "FILE_DIR";
 // export const FILE_SIZE_MAX = "FILE_SIZE_MAX";
 export const ORG_FILES_SIZE_MAX = "ORG_FILES_SIZE_MAX";

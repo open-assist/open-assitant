@@ -51,14 +51,21 @@ export class Unauthorized extends Error {
 export class NotFound extends Error {
   instance: string | undefined = undefined;
 
-  constructor(params: {
-    message?: string;
-    options?: ErrorOptions;
-    instance?: string;
-  }) {
+  constructor(params: { message?: string; options?: ErrorOptions; instance?: string }) {
     super(params.message, params.options);
     this.message = params.message || "Not Found";
     this.instance = params.instance;
+  }
+}
+
+/**
+ * status: 409
+ */
+export class Conflict extends Error {
+  constructor(message?: string, options?: ErrorOptions) {
+    super(message, options);
+    this.message = "Conflict";
+    this.cause = "Save object with conflicts, try again later.";
   }
 }
 

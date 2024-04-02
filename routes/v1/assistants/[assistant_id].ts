@@ -1,10 +1,6 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
-import {
-  AssistantObjectType,
-  ModifyAssistantRequest,
-  DeleteAssistantResponse,
-} from "openai_schemas";
+import { AssistantObject, ModifyAssistantRequest } from "@open-schemas/zod/openai";
 
 const getIDs = (ctx: FreshContext) => ({
   id: ctx.params.assistant_id as string,
@@ -14,10 +10,10 @@ const getIDs = (ctx: FreshContext) => ({
 async function getAssistant(ctx: FreshContext) {
   const { id, parentId } = getIDs(ctx);
 
-  return await AssistantRepository.findById<AssistantObjectType>(id, parentId);
+  return await AssistantRepository.getInstance().findById(id, parentId);
 }
 
-export const handler: Handlers<AssistantObjectType | null> = {
+export const handler: Handlers<AssistantObject | null> = {
   async GET(_req, ctx: FreshContext) {
     return Response.json(await getAssistant(ctx));
   },
@@ -27,7 +23,7 @@ export const handler: Handlers<AssistantObjectType | null> = {
     const organization = ctx.state.organization as string;
     const fields = ModifyAssistantRequest.parse(await req.json());
 
-    const newAssistant = await AssistantRepository.update<AssistantObjectType>(
+    const newAssistant = await AssistantRepository.getInstance().update(
       oldAssistant,
       fields,
       organization,
@@ -39,7 +35,7 @@ export const handler: Handlers<AssistantObjectType | null> = {
     await getAssistant(ctx);
     const { id, parentId } = getIDs(ctx);
 
-    await AssistantRepository.destory(id, parentId);
-    return Response.json(DeleteAssistantResponse.parse({ id }));
+    await AssistantRepository.getInstance().destory(id, parentId);
+    return Response.json({ id });
   },
 };

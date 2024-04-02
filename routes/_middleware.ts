@@ -10,6 +10,7 @@ import {
 } from "$/utils/errors.ts";
 import { ZodError } from "zod";
 import * as log from "$std/log/mod.ts";
+import { Conflict } from "$/utils/errors.ts";
 
 export interface State {
   organization: string;
@@ -52,6 +53,9 @@ export function handler(req: Request, ctx: FreshContext) {
         case NotFound:
           problemDetail.status = 404;
           problemDetail.instance = (error as NotFound).instance;
+          break;
+        case Conflict:
+          problemDetail.status = 409;
           break;
         case ZodError:
           problemDetail.status = 422;

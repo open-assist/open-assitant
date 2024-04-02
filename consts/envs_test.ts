@@ -1,6 +1,7 @@
 import { assertExists } from "@std/assert";
 import { describe, it } from "$std/testing/bdd.ts";
 import {
+  LOG_LEVEL,
   MODEL_KNOWLEDGE_CUTOFF,
   LLM_PROVIDER,
   LLM_MODELS,
@@ -9,6 +10,12 @@ import {
   ANTHROPIC_API_URL,
   ANTHROPIC_VERSION,
 } from "$/consts/envs.ts";
+
+describe("Log variables", () => {
+  it("The LOG_LEVEL const exists", () => {
+    assertExists(LOG_LEVEL);
+  });
+});
 
 describe("LLM variables", () => {
   it("The MODEL_KNOWLEDGE_CUTOFF const exists", () => {

@@ -1,12 +1,10 @@
+import * as log from "@std/log";
 import { defineConfig } from "$fresh/server.ts";
-import * as log from "$std/log/mod.ts";
+import { LOG_LEVEL } from "$/consts/envs.ts";
 import { kv } from "$/repositories/_repository.ts";
-import { isRunJobMessage, RunJob, RunJobMessage } from "$/jobs/run_job.ts";
-import { isStepJobMessage, StepJob, StepJobMessage } from "$/jobs/step_job.ts";
-import { LOG_LEVEL } from "$/utils/constants.ts";
-import { LevelName } from "$std/log/levels.ts";
+import { Job, JobMessage } from "$/jobs/job.ts";
 
-const logLevel = (Deno.env.get(LOG_LEVEL) || "INFO") as LevelName;
+const logLevel = (Deno.env.get(LOG_LEVEL) || "INFO") as log.LevelName;
 log.setup({
   handlers: { console: new log.ConsoleHandler(logLevel) },
   loggers: {
@@ -17,12 +15,8 @@ log.setup({
   },
 });
 
-kv.listenQueue(async (message: unknown) => {
-  if (isRunJobMessage(message)) {
-    await RunJob.execute(message as RunJobMessage);
-  } else if (isStepJobMessage(message)) {
-    await StepJob.execute(message as StepJobMessage);
-  }
+kv.listenQueue(async (message: JobMessage) => {
+  await Job.execute(message);
 });
 
 export default defineConfig({});

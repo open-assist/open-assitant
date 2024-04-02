@@ -1,36 +1,36 @@
-import { ulid } from "$std/ulid/mod.ts";
-import { kv, Repository, type Sort } from "$/repositories/_repository.ts";
-import { ThreadRepository } from "$/repositories/thread.ts";
-import { DbCommitError } from "$/utils/errors.ts";
-import type { RunStepObjectType } from "openai_schemas";
+import { StepObject } from "@open-schemas/zod/openai";
+import { RUN_KEY, STEP_KEY, STEP_OBJECT, STEP_PREFIX, THREAD_KEY } from "$/consts/api.ts";
+import { kv, Repository, type Sort } from "$/repositories/base.ts";
+import { Conflict } from "$/utils/errors.ts";
+import { JobMessage } from "$/jobs/job.ts";
 
-export class StepRepository extends Repository {
-  static idPrefix = "step";
-  static object = "thread.run.step";
-  static parent = "run";
-  static self = "step";
-  static hasSecondaryKey = true;
+export class StepRepository extends Repository<StepObject> {
+  private static instance: StepRepository;
 
-  static genThirdKey(threadId: string, id?: string) {
-    if (id) {
-      return [ThreadRepository.self, threadId, this.self, id];
-    }
-    return [ThreadRepository.self, threadId, this.self];
+  private constructor() {
+    super(STEP_PREFIX, STEP_OBJECT, RUN_KEY, STEP_KEY, true);
   }
 
-  static async createWithThread(
-    fields: Partial<RunStepObjectType>,
+  public static getInstance(): StepRepository {
+    if (!StepRepository.instance) {
+      StepRepository.instance = new StepRepository();
+    }
+    return StepRepository.instance;
+  }
+
+  genThirdKey(threadId: string, id?: string) {
+    if (id) {
+      return [THREAD_KEY, threadId, this.self, id];
+    }
+    return [THREAD_KEY, threadId, this.self];
+  }
+
+  async createWithThread(
+    fields: Partial<StepObject>,
     runId: string,
     threadId: string,
     operation?: Deno.AtomicOperation,
-  ) {
-    const value = {
-      object: this.object,
-      id: `${this.idPrefix}-${ulid()}`,
-      created_at: Date.now(),
-      ...fields,
-    } as RunStepObjectType;
-
+  ): Promise<StepObject> {
     let commit = true;
     if (operation) {
       commit = false;
@@ -38,28 +38,24 @@ export class StepRepository extends Repository {
       operation = kv.atomic();
     }
 
+    const value = await this.create(fields, runId, operation);
+
     const key = this.genKvKey(runId, value.id);
-    const secondaryKey = this.genKvKey(undefined, value.id);
     const thridKey = this.genThirdKey(threadId, value.id);
     operation
-      .check({ key, versionstamp: null })
-      .check({ key: secondaryKey, versionstamp: null })
       .check({ key: thridKey, versionstamp: null })
-      .set(key, value)
-      .set(secondaryKey, key)
-      .set(thridKey, key);
+      .set(thridKey, key)
+      .enqueue({ resourceType: "step", resourceId: value.id } as JobMessage);
 
     if (commit) {
       const { ok } = await operation.commit();
-      if (!ok) throw new DbCommitError();
-
-      return { value };
+      if (!ok) throw new Conflict();
     }
 
-    return { operation, value };
+    return value;
   }
 
-  static async findAllByThreadId(threadId: string, sort?: Sort) {
+  async findAllByThreadId(threadId: string, sort?: Sort) {
     const selector = {
       prefix: this.genThirdKey(threadId),
     };
@@ -71,8 +67,6 @@ export class StepRepository extends Repository {
       ({ value }) => value,
     );
 
-    return (await kv.getMany(keys)).map(
-      ({ value }) => value as RunStepObjectType,
-    );
+    return (await kv.getMany<StepObject[]>(keys)).map(({ value }) => value);
   }
 }

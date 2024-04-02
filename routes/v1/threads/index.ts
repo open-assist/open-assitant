@@ -18,16 +18,10 @@ export const handler: Handlers<ThreadObjectType | null> = {
   },
 
   async POST(req: Request, ctx: FreshContext) {
-    const fields =
-      req.headers.get("content-length") === "0"
-        ? { metadata: {} }
-        : CreateThreadRequest.parse(await req.json());
+    const fields = req.body ? { metadata: {} } : CreateThreadRequest.parse(await req.json());
     const organization = ctx.state.organization as string;
 
-    const { value } = await ThreadRepository.createWithMessages(
-      fields,
-      organization,
-    );
+    const { value } = await ThreadRepository.createWithMessages(fields, organization);
 
     return Response.json(value, { status: 201 });
   },

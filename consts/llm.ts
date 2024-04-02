@@ -1,5 +1,6 @@
 // Set the stop when enable tools
-export const TOOL_STOP = "</calls>";
+export const CALLS_STOP = "</calls>";
+export const CALLS_SPLITTER = "<calls>";
 
 // LLM Providers
 export const ANTHROPIC = "anthropic";

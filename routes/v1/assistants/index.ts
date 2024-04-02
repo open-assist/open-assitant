@@ -1,14 +1,14 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
 import { pagableSchema, sortSchema } from "$/repositories/_repository.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
-import { AssistantObjectType, CreateAssistantRequest } from "openai_schemas";
+import { CreateAssistantRequest, AssistantObject } from "@open-schemas/zod/openai";
 
-export const handler: Handlers<AssistantObjectType | null> = {
+export const handler: Handlers<AssistantObject | null> = {
   async GET(_req: Request, ctx: FreshContext) {
     const params = Object.fromEntries(ctx.url.searchParams);
     const organization = ctx.state.organization as string;
 
-    const page = await AssistantRepository.findAllByPage<AssistantObjectType>(
+    const page = await AssistantRepository.getInstance().findAllByPage(
       organization,
       pagableSchema.parse(params),
       sortSchema.parse(params),
@@ -21,11 +21,7 @@ export const handler: Handlers<AssistantObjectType | null> = {
     const fields = CreateAssistantRequest.parse(await req.json());
     const organization = ctx.state.organization as string;
 
-    const { value: assistant } =
-      await AssistantRepository.create<AssistantObjectType>(
-        fields,
-        organization,
-      );
+    const assistant = await AssistantRepository.getInstance().create(fields, organization);
 
     return Response.json(assistant, { status: 201 });
   },

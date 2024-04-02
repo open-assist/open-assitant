@@ -1,7 +1,7 @@
 import { describe, it } from "@std/testing/bdd";
 import { assertExists } from "@std/assert";
 import {
-  TOOL_STOP,
+  CALLS_STOP,
   ANTHROPIC,
   OLLAMA,
   OPENAI,
@@ -19,8 +19,8 @@ import {
 } from "$/consts/llm.ts";
 
 describe("LLM consts", () => {
-  it("TOOL_STOP exists", () => {
-    assertExists(TOOL_STOP);
+  it("CALLS_STOP exists", () => {
+    assertExists(CALLS_STOP);
   });
 });
 

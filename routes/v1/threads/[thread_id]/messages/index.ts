@@ -1,14 +1,14 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
 import { pagableSchema, sortSchema } from "$/repositories/_repository.ts";
 import { MessageRepository } from "$/repositories/message.ts";
-import { CreateMessageRequest, type MessageObjectType } from "openai_schemas";
+import { CreateMessageRequest, MessageObject } from "@open-schemas/zod/openai";
 import { getThread } from "$/routes/v1/threads/[thread_id].ts";
 
-export const handler: Handlers<MessageObjectType | null> = {
+export const handler: Handlers<MessageObject | null> = {
   async GET(_req: Request, ctx: FreshContext) {
     const thread = await getThread(ctx);
     const params = Object.fromEntries(ctx.url.searchParams);
-    const page = await MessageRepository.findAllByPage<MessageObjectType>(
+    const page = await MessageRepository.getInstance().findAllByPage(
       thread.id,
       pagableSchema.parse(params),
       sortSchema.parse(params),
@@ -21,15 +21,14 @@ export const handler: Handlers<MessageObjectType | null> = {
     const thread = await getThread(ctx);
     const fields = CreateMessageRequest.parse(await req.json());
 
-    const { value: message } =
-      await MessageRepository.create<MessageObjectType>(
-        {
-          ...fields,
-          content: [{ type: "text", text: { value: fields.content } }],
-          thread_id: thread.id,
-        },
-        thread.id,
-      );
+    const message = await MessageRepository.getInstance().create(
+      {
+        ...fields,
+        content: [{ type: "text", text: { value: fields.content } }],
+        thread_id: thread.id,
+      },
+      thread.id,
+    );
 
     return Response.json(message, { status: 201 });
   },

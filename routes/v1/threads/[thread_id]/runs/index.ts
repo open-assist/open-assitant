@@ -1,15 +1,15 @@
-import { CreateRunRequest, type RunObjectType } from "openai_schemas";
+import { CreateRunRequest, RunObject } from "@open-schemas/zod/openai";
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { pagableSchema, sortSchema } from "$/repositories/_repository.ts";
+import { pagableSchema, sortSchema } from "$/repositories/base.ts";
 import { RunRepository } from "$/repositories/run.ts";
 import { getThread } from "$/routes/v1/threads/[thread_id].ts";
 
-export const handler: Handlers<RunObjectType | null> = {
+export const handler: Handlers<RunObject | null> = {
   async GET(_req: Request, ctx: FreshContext) {
     const thread = await getThread(ctx);
     const params = Object.fromEntries(ctx.url.searchParams);
 
-    const page = await RunRepository.findAllByPage<RunObjectType>(
+    const page = await RunRepository.getInstance().findAllByPage(
       thread.id,
       pagableSchema.parse(params),
       sortSchema.parse(params),
@@ -22,7 +22,7 @@ export const handler: Handlers<RunObjectType | null> = {
     const thread = await getThread(ctx);
     const fields = CreateRunRequest.parse(await req.json());
 
-    const { value: run } = await RunRepository.create<RunObjectType>(
+    const run = await RunRepository.getInstance().createAndEnqueue(
       {
         ...fields,
         thread_id: thread.id,

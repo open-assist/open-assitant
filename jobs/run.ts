@@ -1,29 +1,21 @@
-import type { RunObjectType, RunStepObjectType } from "openai_schemas";
-import { DbCommitError } from "$/utils/errors.ts";
+import { StepObject } from "@open-schemas/zod/openai";
 import { RunRepository } from "$/repositories/run.ts";
 import { StepRepository } from "$/repositories/step.ts";
-import { kv } from "$/repositories/_repository.ts";
-
-export interface RunJobMessage {
-  action: "perform" | "cancel" | "expire";
-  runId: string;
-}
-
-export function isRunJobMessage(message: unknown) {
-  return (
-    (message as RunJobMessage).action !== undefined &&
-    (message as RunJobMessage).runId !== undefined
-  );
-}
+import { kv } from "$/repositories/base.ts";
+import { now } from "$/utils/date.ts";
 
 export class RunJob {
   /**
    * Perform the run job.
    *
-   * @param message The rub job message.
+   * @param runId The ID of run.
+   * @param args The arguments for run job.
    */
-  public static async execute(message: RunJobMessage) {
-    const { action, runId } = message;
+  public static async execute(
+    runId: string,
+    args: { action: "perform" | "cancel" | "expire" },
+  ) {
+    const { action } = args;
     switch (action) {
       case "perform":
         await this.perform(runId);
@@ -38,16 +30,17 @@ export class RunJob {
   }
 
   private static async perform(runId: string) {
+    const runRepository = RunRepository.getInstance();
     // judge run status
-    const run = await RunRepository.findById<RunObjectType>(runId);
+    const run = await runRepository.findById(runId);
     if (run.status !== "queued") {
       return;
     }
 
-    const runKey = RunRepository.genKvKey(run.thread_id, run.id);
+    const runKey = runRepository.genKvKey(run.thread_id, run.id);
     // run status: queued -> in_progress, and create step
     const operation = kv.atomic();
-    const { value: step } = await StepRepository.createWithThread(
+    await StepRepository.getInstance().createWithThread(
       {
         assistant_id: run.assistant_id,
         thread_id: run.thread_id,
@@ -62,62 +55,62 @@ export class RunJob {
       .set(runKey, {
         ...run,
         status: "in_progress",
-        started_at: Date.now(),
-      })
-      .enqueue({ stepId: step.id });
+        started_at: now(),
+      });
 
-    const { ok } = await operation.commit();
-    if (!ok) throw new DbCommitError();
+    await operation.commit();
   }
 
   private static async updateStep(
     operation: Deno.AtomicOperation,
     runId: string,
-    fields: Partial<RunStepObjectType>,
+    fields: Partial<StepObject>,
   ) {
-    const step = await StepRepository.findOne<RunStepObjectType>(runId);
+    const stepRepository = StepRepository.getInstance();
+    const step = await stepRepository.findOne(runId);
     if (step && step.status === "in_progress") {
-      operation.set(StepRepository.genKvKey(runId, step.id), {
+      operation.set(stepRepository.genKvKey(runId, step.id), {
         ...step,
         ...fields,
-      } as RunStepObjectType);
+      });
     }
   }
 
   private static async cancel(runId: string) {
-    const run = await RunRepository.findById<RunObjectType>(runId);
+    const runRepository = RunRepository.getInstance();
+    const run = await runRepository.findById(runId);
     if (run.status === "cancelling") {
-      const now = Date.now();
+      const cancelledAt = now();
 
-      const { operation } = RunRepository.updateWithoutCommit<RunObjectType>(
+      const operation = kv.atomic();
+      runRepository.update(
         run,
         {
           status: "cancelled",
-          cancelled_at: now,
+          cancelled_at: cancelledAt,
         },
         run.thread_id,
       );
 
       await this.updateStep(operation, runId, {
         status: "cancelled",
-        cancelled_at: now,
+        cancelled_at: cancelledAt,
       });
 
-      const { ok } = await operation.commit();
-      if (!ok) {
-        console.log("[-] cancel run(%s) failed.", runId);
-      }
+      await operation.commit();
     }
   }
 
   private static async expire(runId: string) {
-    const run = await RunRepository.findById<RunObjectType>(runId);
+    const runRepository = RunRepository.getInstance();
+    const run = await runRepository.findById(runId);
     if (
       run.status === "queued" ||
       run.status === "in_progress" ||
       run.status === "requires_action"
     ) {
-      const { operation } = RunRepository.updateWithoutCommit<RunObjectType>(
+      const operation = kv.atomic();
+      runRepository.update(
         run,
         {
           status: "expired",
@@ -130,10 +123,7 @@ export class RunJob {
         expired_at: Date.now(),
       });
 
-      const { ok } = await operation.commit();
-      if (!ok) {
-        console.log("[-] expire run(%s) failed.", runId);
-      }
+      await operation.commit();
     }
   }
 }

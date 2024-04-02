@@ -1,7 +1,14 @@
+// deno
+export const DENO_KV_PATH = "DENO_KV_PATH";
+
+// the evn names for log
+export const LOG_LEVEL = "LOG_LEVEL";
+
 // the env names for llm
 export const LLM_PROVIDER = "LLM_PROVIDER";
 export const LLM_MODELS = "LLM_MODELS";
 export const LLM_MODELS_MAPPING = "LLM_MODELS_MAPPING";
+export const LLM_HAS_MULTIMODAL_MODELS = "LLM_HAS_MULTIMODAL_MODELS";
 export const MODEL_KNOWLEDGE_CUTOFF = "MODEL_KNOWLEDGE_CUTOFF";
 
 // the env var names of anthropic

@@ -7,6 +7,7 @@ import {
   CreateMessageRequest,
   CreateMessageResponse,
   StopReason,
+  Message,
 } from "@open-schemas/zod/anthropic";
 import {
   CreateChatCompletionRequest,
@@ -15,12 +16,22 @@ import {
   ChatCompletionRequestMessageContentPart,
   FinishReason,
   ChatCompletionToolCall,
+  MessageObject,
+  MessageTextContent,
+  MessageImageFileContent,
+  StepObject,
+  CodeInterpreterToolCall,
+  FunctionToolCall,
+  RetrievalToolCall,
+  ToolCall,
+  AssistantResponse,
 } from "@open-schemas/zod/openai";
-import { TOOL_STOP, CHAT_COMPLETION_PREFIX } from "$/consts/llm.ts";
+import { CALLS_STOP, CHAT_COMPLETION_PREFIX } from "$/consts/llm.ts";
 import { TOOLS_PROMPT, FUNCTION_TOOLS_PROMPT } from "$/utils/prompts.ts";
 import { XML } from "$/utils/xml.ts";
 import { now } from "$/utils/date.ts";
 import { genSystemFingerprint } from "$/utils/llm.ts";
+// import { AssistantResponse } from "$/schemas/llm.ts";
 
 /**
  * Parses a data URL string and returns an object containing the media type, type, and data.
@@ -53,69 +64,64 @@ function parseDataUrl(url: string) {
  * @param message The ChatCompletionRequestMessage to convert.
  * @returns The converted Message.
  */
-export const CompletionMessagetoMessage =
-  ChatCompletionRequestMessage.transform(
-    (message: ChatCompletionRequestMessage) => {
-      function convertContent(
-        openAiContent: ChatCompletionRequestMessageContentPart,
-      ) {
-        if (openAiContent.type === "image_url") {
-          const {
-            image_url: { url },
-          } = openAiContent;
-          return ImageContent.parse({
-            source: parseDataUrl(url),
-          });
-        }
-        return TextContent.parse(openAiContent);
+export const CompletionMessagetoMessage = ChatCompletionRequestMessage.transform(
+  (message: ChatCompletionRequestMessage) => {
+    function convertContent(openAiContent: ChatCompletionRequestMessageContentPart) {
+      if (openAiContent.type === "image_url") {
+        const {
+          image_url: { url },
+        } = openAiContent;
+        return ImageContent.parse({
+          source: parseDataUrl(url),
+        });
       }
+      return TextContent.parse(openAiContent);
+    }
 
-      const { role, content } = message;
+    const { role, content } = message;
 
-      let messageContent;
-      if (role === "assistant") {
-        let text = content;
-        if (message.tool_calls) {
-          text = `${text}\n${XML.stringify(
-            {
-              tool_calls: {
-                tool_call: message.tool_calls,
-              },
-            },
-            { format: true },
-          )}`;
-        }
-        messageContent = [TextContent.parse({ text })];
-      } else if (role === "tool") {
-        const text = XML.stringify(
+    let messageContent;
+    if (role === "assistant") {
+      let text = content;
+      if (message.tool_calls) {
+        text = `${text}\n${XML.stringify(
           {
-            tool_results: {
-              tool_result: {
-                tool_call_id: message.tool_call_id,
-                output: message.content,
-              },
+            tool_calls: {
+              tool_call: message.tool_calls,
             },
           },
           { format: true },
-        );
-        messageContent = [TextContent.parse({ text })];
-      } else {
-        if (Array.isArray(content)) {
-          messageContent = content.map(convertContent);
-        } else {
-          messageContent = [TextContent.parse({ text: content })];
-        }
+        )}`;
       }
-
-      log.debug(
-        `[completionMessagetoMessage] content: ${JSON.stringify(messageContent)}`,
+      messageContent = [TextContent.parse({ text })];
+    } else if (role === "tool") {
+      const text = XML.stringify(
+        {
+          tool_results: {
+            tool_result: {
+              tool_call_id: message.tool_call_id,
+              output: message.content,
+            },
+          },
+        },
+        { format: true },
       );
-      return {
-        role: role === "assistant" ? "assistant" : "user",
-        content: messageContent,
-      };
-    },
-  );
+      messageContent = [TextContent.parse({ text })];
+    } else {
+      if (Array.isArray(content)) {
+        messageContent = content.map(convertContent);
+      } else {
+        messageContent = [TextContent.parse({ text: content })];
+      }
+    }
+
+    log.debug(`[completionMessagetoMessage] content: ${JSON.stringify(messageContent)}`);
+    return {
+      role: role === "assistant" ? "assistant" : "user",
+      content: messageContent,
+    };
+  },
+);
 
 /**
  * Converts a CreateChatCompletionRequest to a CreateMessageRequest.
@@ -126,52 +132,47 @@ export const CompletionMessagetoMessage =
  * @param request The CreateChatCompletionRequest to convert.
  * @returns The converted CreateMessageRequest.
  */
-export const CompletionRequestToMessageRequest =
-  CreateChatCompletionRequest.transform(
-    (request: CreateChatCompletionRequest): CreateMessageRequest => {
-      const { messages, max_tokens, user, stop, tools, ...rest } = request;
-      const systemMessages = messages.filter((m) => m.role === "system");
-      const supportMessages = messages.filter((m) =>
-        ["user", "assistant", "tool"].includes(m.role),
-      );
+export const CompletionRequestToMessageRequest = CreateChatCompletionRequest.transform(
+  (request: CreateChatCompletionRequest): CreateMessageRequest => {
+    const { messages, max_tokens, user, stop, tools, ...rest } = request;
+    const systemMessages = messages.filter((m) => m.role === "system");
+    const supportMessages = messages.filter((m) => ["user", "assistant", "tool"].includes(m.role));
 
-      function get_system(messages: string[]) {
-        let system = "";
-        if (messages.length > 0) {
-          system = messages.join("\n");
-        }
-        if (tools && tools.length > 0) {
-          const prompt = XML.stringify(tools, {
-            arrayNodeName: "tool",
-            format: true,
-          });
-          system = `${system}${TOOLS_PROMPT}${FUNCTION_TOOLS_PROMPT}\n<tools>\n${prompt}</tools>`;
-        }
-
-        log.debug(`[get_system] system:\n${system}`);
-        return system;
+    function get_system(messages: string[]) {
+      let system = "";
+      if (messages.length > 0) {
+        system = messages.join("\n");
+      }
+      if (tools && tools.length > 0) {
+        const prompt = XML.stringify(tools, {
+          arrayNodeName: "tool",
+          format: true,
+        });
+        system = `${system}${TOOLS_PROMPT}${FUNCTION_TOOLS_PROMPT}\n<tools>\n${prompt}</tools>`;
       }
 
-      function get_stop_sequences(stop: string | string[]) {
-        const allStop = Array.isArray(stop) ? stop : [stop];
-        if (tools && tools.length > 0) {
-          return [TOOL_STOP, ...allStop];
-        }
-        return allStop;
-      }
+      log.debug(`[get_system] system:\n${system}`);
+      return system;
+    }
 
-      return CreateMessageRequest.parse({
-        ...rest,
-        messages: supportMessages.map((m) =>
-          CompletionMessagetoMessage.parse(m),
-        ),
-        metadata: user ? { user_id: user } : undefined,
-        stop_sequences: get_stop_sequences(stop ?? []),
-        system: get_system(systemMessages.map((m) => m.content as string)),
-        max_tokens: max_tokens ?? 4096,
-      });
-    },
-  );
+    function get_stop_sequences(stop: string | string[]) {
+      const allStop = Array.isArray(stop) ? stop : [stop];
+      if (tools && tools.length > 0) {
+        return [CALLS_STOP, ...allStop];
+      }
+      return allStop;
+    }
+
+    return CreateMessageRequest.parse({
+      ...rest,
+      messages: supportMessages.map((m) => CompletionMessagetoMessage.parse(m)),
+      metadata: user ? { user_id: user } : undefined,
+      stop_sequences: get_stop_sequences(stop ?? []),
+      system: get_system(systemMessages.map((m) => m.content as string)),
+      max_tokens: max_tokens ?? 4096,
+    });
+  },
+);
 
 /**
  * Converts a CreateMessageResponse to a ChatCompletionObject.
@@ -211,7 +212,7 @@ export function parseXmlToFunctionToolCalls(xml: string) {
 /**
  * Converts a StopReason to a FinishReason.
  * Maps the StopReason values to the corresponding FinishReason values.
- * If the stop_sequence is the TOOL_STOP constant, returns "tool_calls" as the FinishReason.
+ * If the stop_sequence is the CALLS_STOP constant, returns "tool_calls" as the FinishReason.
  *
  * @param reason The StopReason to convert.
  * @param sequence The stop_sequence that triggered the stop, if any.
@@ -227,30 +228,23 @@ export function convertStopReasonToFinishReason(
     case "max_tokens":
       return "length";
     case "stop_sequence":
-      return TOOL_STOP === sequence ? "tool_calls" : "stop";
+      return CALLS_STOP === sequence ? "tool_calls" : "stop";
     case "end_turn":
     default:
       return "stop";
   }
 }
 
-export const CreateMessageResponseToChatCompletionObject =
-  CreateMessageResponse.transform(async (response: CreateMessageResponse) => {
-    const { content, role, stop_reason, stop_sequence, usage, ...rest } =
-      response;
-    const finish_reason = convertStopReasonToFinishReason(
-      stop_reason,
-      stop_sequence,
-    );
+export const CreateMessageResponseToChatCompletionObject = CreateMessageResponse.transform(
+  async (response: CreateMessageResponse) => {
+    const { content, role, stop_reason, stop_sequence, usage, ...rest } = response;
+    const finish_reason = convertStopReasonToFinishReason(stop_reason, stop_sequence);
     return ChatCompletionObject.parse({
       ...rest,
       id: `${CHAT_COMPLETION_PREFIX}-${ulid()}`,
       choices: content.map((c, index: number) => {
         const parts = c.text.split("<calls>");
-        const tool_calls =
-          parts.length === 2
-            ? parseXmlToFunctionToolCalls(parts[1])
-            : undefined;
+        const tool_calls = parts.length === 2 ? parseXmlToFunctionToolCalls(parts[1]) : undefined;
         return {
           index,
           finish_reason,
@@ -269,4 +263,109 @@ export const CreateMessageResponseToChatCompletionObject =
       created: now(),
       system_fingerprint: await genSystemFingerprint(),
     });
-  });
+  },
+);
+
+export const MessageObjectToMessage = MessageObject.transform((message: MessageObject) => {
+  const { role, content } = message;
+  return {
+    role,
+    content: content.map((c: MessageTextContent | MessageImageFileContent) => {
+      if (c.type === "text") {
+        return TextContent.parse({
+          text: c.text.value,
+        });
+      }
+      return ImageContent.parse({
+        source: parseDataUrl(c.image_file.file_id),
+      });
+    }),
+  } as Message;
+});
+
+function CodeInterpreterToolCallToMessages(_c: CodeInterpreterToolCall): Message[] {
+  // TODO: implement
+  return [];
+}
+
+function FunctionToolCallToMessages(call: FunctionToolCall): Message[] {
+  const toolCall = XML.stringify(
+    {
+      calls: {
+        tool_call: {
+          id: call.id,
+          type: call.type,
+          function: {
+            name: call.function.name,
+            parameters: JSON.parse(call.function.arguments),
+          },
+        },
+      },
+    },
+    {
+      format: true,
+    },
+  );
+  const toolOutput = XML.stringify(
+    {
+      outputs: {
+        tool_output: {
+          tool_call_id: call.id,
+          output: call.function.output,
+        },
+      },
+    },
+    {
+      format: true,
+    },
+  );
+  return [
+    {
+      role: "assistant",
+      content: [TextContent.parse({ text: toolCall })],
+    },
+    {
+      role: "user",
+      content: [TextContent.parse({ text: toolOutput })],
+    },
+  ];
+}
+
+function RetrievalToolCallToMessages(_r: RetrievalToolCall): Message[] {
+  // TODO: implement
+  return [];
+}
+
+export const StepObjectToMessages = StepObject.transform((step: StepObject): Message[] => {
+  const { step_details } = step;
+  if (step_details.type === "tool_calls") {
+    return step_details.tool_calls
+      .map((c: ToolCall) => {
+        if (c.type === "function") return FunctionToolCallToMessages(c);
+        if (c.type === "code_interpreter") return CodeInterpreterToolCallToMessages(c);
+        if (c.type === "retrieval") return RetrievalToolCallToMessages(c);
+      })
+      .flatMap((m) => m) as Message[];
+  }
+  return [];
+});
+
+export const CreateMessageResponseToAssistantResponse = CreateMessageResponse.transform(
+  (response) => {
+    const {
+      usage,
+      content: [{ text }],
+    } = response;
+    const parts = text.split("<calls>");
+    return {
+      content:
+        parts.length === 1 ? MessageTextContent.parse({ text: { value: parts[0] } }) : undefined,
+      tool_calls: parts.length === 2 ? XML.parse(parts[1]).tool_call : undefined,
+      usage: {
+        prompt_tokens: usage.input_tokens,
+        completion_tokens: usage.output_tokens,
+        total_tokens: usage.input_tokens + usage.output_tokens,
+      },
+    } as AssistantResponse;
+  },
+);

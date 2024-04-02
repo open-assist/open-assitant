@@ -2,10 +2,10 @@ import { FreshContext, Handlers } from "$fresh/server.ts";
 import { UnprocessableContent } from "$/utils/errors.ts";
 import { getRun } from "$/routes/v1/threads/[thread_id]/runs/[run_id].ts";
 import { RunRepository } from "$/repositories/run.ts";
-import { type RunObjectType } from "openai_schemas";
+import { RunObject } from "@open-schemas/zod/openai";
 import { getThread } from "$/routes/v1/threads/[thread_id].ts";
 
-export const handler: Handlers<RunObjectType | null> = {
+export const handler: Handlers<RunObject | null> = {
   async POST(_req: Request, ctx: FreshContext) {
     const thread = await getThread(ctx);
     const run = await getRun(ctx);
@@ -19,7 +19,7 @@ export const handler: Handlers<RunObjectType | null> = {
       throw new UnprocessableContent(`The run was already ${run.status}.`);
     }
 
-    const newRun = await RunRepository.cancel(run, thread.id);
+    const newRun = await RunRepository.getInstance().cancel(run, thread.id);
 
     return Response.json(newRun, {
       status: 202,
