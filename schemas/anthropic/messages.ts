@@ -351,7 +351,7 @@ export const StepObjectToMessages = StepObject.transform((step: StepObject): Mes
 });
 
 export const CreateMessageResponseToAssistantResponse = CreateMessageResponse.transform(
-  (response) => {
+  (response: CreateMessageResponse) => {
     const {
       usage,
       content: [{ text }],

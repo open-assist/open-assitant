@@ -178,6 +178,9 @@ export class StepJob {
         if (this.isFunctionToolCall(tool_calls)) {
           await this.setRunRequiresAction(run, tool_calls as FunctionToolCall[], operation);
         } else {
+          // TODO: execute code interpreter code and retrieval tools
+
+          // trigger next step
           await stepRepository.createWithThread(
             {
               assistant_id: run.assistant_id,
