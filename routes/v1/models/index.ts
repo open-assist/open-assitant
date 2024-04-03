@@ -1,5 +1,5 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { ModelObject, ListModelsResponse } from "$/schemas/openai/models.ts";
+import { ModelObject } from "@open-schemas/zod/openai";
 import { getProvider } from "$/utils/llm.ts";
 import { getModels, getModelsMapping } from "$/utils/llm.ts";
 
@@ -8,9 +8,7 @@ export const handler: Handlers<ModelObject | null> = {
     let models: ModelObject[];
     const modelsMapping = getModelsMapping();
     if (modelsMapping) {
-      models = Object.keys(modelsMapping).map((id) =>
-        ModelObject.parse({ id }),
-      );
+      models = Object.keys(modelsMapping).map((id) => ModelObject.parse({ id }));
     } else {
       models = getModels().map((id) =>
         ModelObject.parse({
@@ -20,10 +18,9 @@ export const handler: Handlers<ModelObject | null> = {
       );
     }
 
-    return Response.json(
-      ListModelsResponse.parse({
-        data: models,
-      }),
-    );
+    return Response.json({
+      object: "list",
+      data: models,
+    });
   },
 };
