@@ -2,20 +2,14 @@ import {
   FunctionToolCall,
   RunObject,
   StepObject,
+  ToolCall,
   ToolCallsDetail,
   ToolOutput,
 } from "@open-schemas/zod/openai";
 import { kv, Repository } from "$/repositories/base.ts";
 import { StepRepository } from "$/repositories/step.ts";
-import { type Meta } from "$/schemas/_base.ts";
 import { Conflict } from "$/utils/errors.ts";
-import {
-  RUN_EXPIRED_DURATION,
-  RUN_KEY,
-  RUN_OBJECT,
-  RUN_PREFIX,
-  THREAD_KEY,
-} from "$/consts/api.ts";
+import { RUN_EXPIRED_DURATION, RUN_KEY, RUN_OBJECT, RUN_PREFIX, THREAD_KEY } from "$/consts/api.ts";
 import { JobMessage } from "$/jobs/job.ts";
 import { now } from "$/utils/date.ts";
 
@@ -60,22 +54,20 @@ export class RunRepository extends Repository<RunObject> {
       resourceId: value.id,
     } as JobMessage;
 
-    operation.enqueue({
-      ...resourceMessage,
-      args: JSON.stringify(
-        { action: "perform" },
-      ),
-    }).enqueue(
-      {
+    operation
+      .enqueue({
         ...resourceMessage,
-        args: JSON.stringify(
-          { action: "expire" },
-        ),
-      },
-      {
-        delay: RUN_EXPIRED_DURATION * 1000,
-      },
-    );
+        args: JSON.stringify({ action: "perform" }),
+      })
+      .enqueue(
+        {
+          ...resourceMessage,
+          args: JSON.stringify({ action: "expire" }),
+        },
+        {
+          delay: RUN_EXPIRED_DURATION * 1000,
+        },
+      );
 
     if (commit) {
       const { ok } = await operation.commit();
@@ -94,24 +86,18 @@ export class RunRepository extends Repository<RunObject> {
 
     await kv
       .atomic()
-      .enqueue(
-        {
-          resourceType: "run",
-          resourceId: newRun.id,
-          args: JSON.stringify({ action: "cancel" }),
-        } as JobMessage,
-      )
-      .set(this.genKvKey(threadId, (old as Meta).id), newRun)
+      .enqueue({
+        resourceType: "run",
+        resourceId: newRun.id,
+        args: JSON.stringify({ action: "cancel" }),
+      } as JobMessage)
+      .set(this.genKvKey(threadId, (old as RunObject).id), newRun)
       .commit();
 
     return newRun;
   }
 
-  async submitToolOutputs(
-    run: RunObject,
-    step: StepObject,
-    outputs: ToolOutput[],
-  ) {
+  async submitToolOutputs(run: RunObject, step: StepObject, outputs: ToolOutput[]) {
     const newRun = {
       ...run,
       status: "queued",
@@ -126,28 +112,26 @@ export class RunRepository extends Repository<RunObject> {
       .atomic()
       .enqueue({
         ...resourceMessage,
-        args: JSON.stringify(
-          { action: "perform" },
-        ),
+        args: JSON.stringify({ action: "perform" }),
       })
-      .enqueue({
-        ...resourceMessage,
-        args: JSON.stringify(
-          { action: "expire" },
-        ),
-      }, {
-        delay: RUN_EXPIRED_DURATION * 1000,
-      })
+      .enqueue(
+        {
+          ...resourceMessage,
+          args: JSON.stringify({ action: "expire" }),
+        },
+        {
+          delay: RUN_EXPIRED_DURATION * 1000,
+        },
+      )
       .set(this.genKvKey(run.thread_id, run.id), newRun);
 
-    const toolCallsMap = (step.step_details as ToolCallsDetail).tool_calls
-      .reduce(
-        (pre, cur) => ({
-          ...pre,
-          [cur.id]: cur,
-        }),
-        {},
-      ) as { [key: string]: FunctionToolCall };
+    const toolCallsMap = (step.step_details as ToolCallsDetail).tool_calls.reduce(
+      (pre, cur: ToolCall) => ({
+        ...pre,
+        [cur.id]: cur,
+      }),
+      {},
+    ) as { [key: string]: FunctionToolCall };
 
     outputs.forEach((o) => {
       toolCallsMap[o.tool_call_id].function.output = o.output;
@@ -159,10 +143,7 @@ export class RunRepository extends Repository<RunObject> {
         tool_calls: Object.values(toolCallsMap),
       },
     } as StepObject;
-    atomicOp.set(
-      StepRepository.getInstance().genKvKey(run.id, step.id),
-      newStep,
-    );
+    atomicOp.set(StepRepository.getInstance().genKvKey(run.id, step.id), newStep);
 
     await atomicOp.commit();
 

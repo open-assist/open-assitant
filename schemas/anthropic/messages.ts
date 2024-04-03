@@ -31,7 +31,6 @@ import { TOOLS_PROMPT, FUNCTION_TOOLS_PROMPT } from "$/utils/prompts.ts";
 import { XML } from "$/utils/xml.ts";
 import { now } from "$/utils/date.ts";
 import { genSystemFingerprint } from "$/utils/llm.ts";
-// import { AssistantResponse } from "$/schemas/llm.ts";
 
 /**
  * Parses a data URL string and returns an object containing the media type, type, and data.
