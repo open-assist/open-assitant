@@ -1,17 +1,16 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { CreateThreadRequest, type ThreadObjectType } from "openai_schemas";
+import { CreateThreadRequest, ThreadObject, Pagination, Ordering } from "@open-schemas/zod/openai";
 import { ThreadRepository } from "$/repositories/thread.ts";
-import { pagableSchema, sortSchema } from "$/repositories/_repository.ts";
 
-export const handler: Handlers<ThreadObjectType | null> = {
+export const handler: Handlers<ThreadObject | null> = {
   async GET(_req: Request, ctx: FreshContext) {
     const params = Object.fromEntries(ctx.url.searchParams);
     const organization = ctx.state.organization as string;
 
-    const page = await ThreadRepository.findAllByPage<ThreadObjectType>(
+    const page = await ThreadRepository.getInstance().findAllByPage(
       organization,
-      pagableSchema.parse(params),
-      sortSchema.parse(params),
+      Pagination.parse(params),
+      Ordering.parse(params),
     );
 
     return Response.json(page);
@@ -21,8 +20,8 @@ export const handler: Handlers<ThreadObjectType | null> = {
     const fields = req.body ? { metadata: {} } : CreateThreadRequest.parse(await req.json());
     const organization = ctx.state.organization as string;
 
-    const { value } = await ThreadRepository.createWithMessages(fields, organization);
+    const thread = await ThreadRepository.getInstance().createWithMessages(fields, organization);
 
-    return Response.json(value, { status: 201 });
+    return Response.json(thread, { status: 201 });
   },
 };

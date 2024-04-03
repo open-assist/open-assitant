@@ -1,7 +1,6 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { StepObject } from "@open-schemas/zod/openai";
+import { StepObject, Pagination, Ordering } from "@open-schemas/zod/openai";
 import { StepRepository } from "$/repositories/step.ts";
-import { pagableSchema, sortSchema } from "$/repositories/base.ts";
 import { getThread } from "$/routes/v1/threads/[thread_id].ts";
 import { getRun } from "$/routes/v1/threads/[thread_id]/runs/[run_id].ts";
 
@@ -13,8 +12,8 @@ export const handler: Handlers<StepObject | null> = {
     const params = Object.fromEntries(ctx.url.searchParams);
     const page = await StepRepository.getInstance().findAllByPage(
       run.id,
-      pagableSchema.parse(params),
-      sortSchema.parse(params),
+      Pagination.parse(params),
+      Ordering.parse(params),
     );
 
     return Response.json(page);

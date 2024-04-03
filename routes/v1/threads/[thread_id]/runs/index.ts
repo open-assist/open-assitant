@@ -1,6 +1,5 @@
-import { CreateRunRequest, RunObject } from "@open-schemas/zod/openai";
+import { CreateRunRequest, RunObject, Pagination, Ordering } from "@open-schemas/zod/openai";
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { pagableSchema, sortSchema } from "$/repositories/base.ts";
 import { RunRepository } from "$/repositories/run.ts";
 import { getThread } from "$/routes/v1/threads/[thread_id].ts";
 
@@ -11,8 +10,8 @@ export const handler: Handlers<RunObject | null> = {
 
     const page = await RunRepository.getInstance().findAllByPage(
       thread.id,
-      pagableSchema.parse(params),
-      sortSchema.parse(params),
+      Pagination.parse(params),
+      Ordering.parse(params),
     );
 
     return Response.json(page);

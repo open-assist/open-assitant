@@ -1,25 +1,27 @@
-import { kv, Repository } from "$/repositories/_repository.ts";
+import { kv, Repository } from "$/repositories/base.ts";
 import { MessageRepository } from "$/repositories/message.ts";
-import {
-  CreateThreadRequestType,
-  MessageObjectType,
-  ThreadObjectType,
-} from "openai_schemas";
-import { DbCommitError } from "$/utils/errors.ts";
+import { CreateThreadRequest, MessageObject, ThreadObject } from "@open-schemas/zod/openai";
+import { Conflict } from "$/utils/errors.ts";
+import { THREAD_PREFIX, THREAD_OBJECT, THREAD_KEY, ORGANIZATION } from "$/consts/api.ts";
 
-export class ThreadRepository extends Repository {
-  static idPrefix = "thrd";
-  static object = "thread";
-  static parent = "organization";
-  static self = "thread";
+export class ThreadRepository extends Repository<ThreadObject> {
+  private static instance: ThreadRepository;
 
-  static async createWithMessages(
-    fields: CreateThreadRequestType,
-    org: string,
-  ) {
+  private constructor() {
+    super(THREAD_PREFIX, THREAD_OBJECT, ORGANIZATION, THREAD_KEY);
+  }
+
+  public static getInstance(): ThreadRepository {
+    if (!ThreadRepository.instance) {
+      ThreadRepository.instance = new ThreadRepository();
+    }
+    return ThreadRepository.instance;
+  }
+
+  async createWithMessages(fields: CreateThreadRequest, org: string) {
     const operation = kv.atomic();
 
-    const { value: thread } = await this.create<ThreadObjectType>(
+    const thread = await this.create(
       {
         metadata: fields.metadata,
       },
@@ -33,18 +35,14 @@ export class ThreadRepository extends Repository {
           ...m,
           content: [{ type: "text", text: { value: m.content } }],
           thread_id: thread.id,
-        } as MessageObjectType;
-        await MessageRepository.create<MessageObjectType>(
-          messageFields,
-          thread.id,
-          operation,
-        );
+        } as MessageObject;
+        await MessageRepository.getInstance().create(messageFields, thread.id, operation);
       });
     }
 
     const { ok } = await operation.commit();
-    if (!ok) throw new DbCommitError();
+    if (!ok) throw new Conflict();
 
-    return { value: thread };
+    return thread;
   }
 }

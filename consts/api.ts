@@ -2,6 +2,8 @@ export const TEXT_EVENT_STREAM_HEADER = {
   "Content-Type": "text/event-stream",
 };
 
+export const ORGANIZATION = "organization";
+
 export const ASSISTANT_KEY = "assistant";
 export const ASSISTANT_OBJECT = "assistant";
 export const ASSISTANT_PREFIX = "asst";

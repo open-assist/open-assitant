@@ -1,7 +1,11 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { pagableSchema, sortSchema } from "$/repositories/_repository.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
-import { CreateAssistantRequest, AssistantObject } from "@open-schemas/zod/openai";
+import {
+  CreateAssistantRequest,
+  AssistantObject,
+  Pagination,
+  Ordering,
+} from "@open-schemas/zod/openai";
 
 export const handler: Handlers<AssistantObject | null> = {
   async GET(_req: Request, ctx: FreshContext) {
@@ -10,8 +14,8 @@ export const handler: Handlers<AssistantObject | null> = {
 
     const page = await AssistantRepository.getInstance().findAllByPage(
       organization,
-      pagableSchema.parse(params),
-      sortSchema.parse(params),
+      Pagination.parse(params),
+      Ordering.parse(params),
     );
 
     return Response.json(page);

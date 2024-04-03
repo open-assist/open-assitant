@@ -1,7 +1,11 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { pagableSchema, sortSchema } from "$/repositories/_repository.ts";
 import { MessageRepository } from "$/repositories/message.ts";
-import { CreateMessageRequest, MessageObject } from "@open-schemas/zod/openai";
+import {
+  CreateMessageRequest,
+  MessageObject,
+  Pagination,
+  Ordering,
+} from "@open-schemas/zod/openai";
 import { getThread } from "$/routes/v1/threads/[thread_id].ts";
 
 export const handler: Handlers<MessageObject | null> = {
@@ -10,8 +14,8 @@ export const handler: Handlers<MessageObject | null> = {
     const params = Object.fromEntries(ctx.url.searchParams);
     const page = await MessageRepository.getInstance().findAllByPage(
       thread.id,
-      pagableSchema.parse(params),
-      sortSchema.parse(params),
+      Pagination.parse(params),
+      Ordering.parse(params),
     );
 
     return Response.json(page);

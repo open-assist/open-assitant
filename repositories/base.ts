@@ -1,4 +1,4 @@
-import { ObjectMeta } from "@open-schemas/zod/openai";
+import { ObjectMeta, Pagination, Ordering } from "@open-schemas/zod/openai";
 import { z } from "zod";
 import { ulid } from "$std/ulid/mod.ts";
 import { Conflict, NotFound } from "$/utils/errors.ts";
@@ -68,25 +68,29 @@ export class Repository<T> {
     }
   }
 
-  async findAll(parentId?: string, sort?: Sort): Promise<T[]> {
+  async findAll(parentId?: string, ordering?: Ordering): Promise<T[]> {
     const selector = {
       prefix: this.genKvKey(parentId),
     };
     const options = {
-      reverse: sort?.order === "desc",
+      reverse: ordering?.order === "desc",
     };
     return await Array.fromAsync(kv.list<T>(selector, options), ({ value }) => value);
   }
 
-  async findAllByPage(parentId?: string, pagable?: Pagable, sort?: Sort): Promise<Page<T>> {
+  async findAllByPage(
+    parentId?: string,
+    pagination?: Pagination,
+    ordering?: Ordering,
+  ): Promise<Page<T>> {
     const selector = {
       prefix: this.genKvKey(parentId),
-      start: pagable?.after && this.genKvKey(parentId, pagable.after),
-      end: pagable?.before && this.genKvKey(parentId, pagable.before),
+      start: pagination?.after && this.genKvKey(parentId, pagination.after),
+      end: pagination?.before && this.genKvKey(parentId, pagination.before),
     } as Deno.KvListSelector;
     const options = {
-      limit: pagable?.limit && pagable.limit + 1,
-      reverse: sort?.order === "desc",
+      limit: pagination?.limit && pagination.limit + 1,
+      reverse: ordering?.order === "desc",
     } as Deno.KvListOptions;
 
     const objects = await Array.fromAsync(
@@ -100,7 +104,7 @@ export class Repository<T> {
       last_id: undefined,
       has_more: false,
     } as Page<T>;
-    if (pagable?.limit && objects.length > pagable.limit) {
+    if (pagination?.limit && objects.length > pagination.limit) {
       page.has_more = true;
       page.data = objects.slice(0, -1) as T[];
       page.last_id = objects.at(-2)?.id;

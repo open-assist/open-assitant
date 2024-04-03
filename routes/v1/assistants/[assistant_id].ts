@@ -1,6 +1,10 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
-import { AssistantObject, ModifyAssistantRequest } from "@open-schemas/zod/openai";
+import {
+  AssistantObject,
+  ModifyAssistantRequest,
+  DeleteAssistantResponse,
+} from "@open-schemas/zod/openai";
 
 const getIDs = (ctx: FreshContext) => ({
   id: ctx.params.assistant_id as string,
@@ -36,6 +40,6 @@ export const handler: Handlers<AssistantObject | null> = {
     const { id, parentId } = getIDs(ctx);
 
     await AssistantRepository.getInstance().destory(id, parentId);
-    return Response.json({ id });
+    return Response.json(DeleteAssistantResponse.parse({ id }));
   },
 };
