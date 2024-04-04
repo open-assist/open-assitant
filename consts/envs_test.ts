@@ -9,6 +9,8 @@ import {
   ANTHROPIC_API_KEY,
   ANTHROPIC_API_URL,
   ANTHROPIC_VERSION,
+  FILE_DIR,
+  ORG_FILES_SIZE_MAX,
 } from "$/consts/envs.ts";
 
 describe("Log variables", () => {
@@ -46,5 +48,15 @@ describe("Anthropic variables", () => {
 
   it("The ANTHROPIC_VERSION const exists", () => {
     assertExists(ANTHROPIC_VERSION);
+  });
+});
+
+describe("Files API variables", () => {
+  it("The FILE_DIR const exists", () => {
+    assertExists(FILE_DIR);
+  });
+
+  it("The ORG_FILES_SIZE_MAX const exists", () => {
+    assertExists(ORG_FILES_SIZE_MAX);
   });
 });

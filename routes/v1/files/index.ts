@@ -1,49 +1,29 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { z } from "zod";
-import { pagableSchema, sortSchema } from "$/repositories/_repository.ts";
+import { FileObject, UploadFileRequest } from "@open-schemas/zod/openai";
 import { FileRepository } from "$/repositories/file.ts";
 import * as log from "$std/log/mod.ts";
-import { ensureDir } from "$/utils/file.ts";
-import { getFileDir } from "$/utils/file.ts";
-import type { FileObjectType } from "$/schemas/file.ts";
+import { ensureDir, getFileDir, getOrgFilesSizeMax } from "$/utils/file.ts";
 import { UnprocessableContent } from "$/utils/errors.ts";
-import { getOrgFilesSizeMax } from "$/utils/file.ts";
+import { kv } from "$/repositories/_repository.ts";
 
-export const CreateFileRequest = z.object({
-  file: z.object({
-    name: z.string(),
-    size: z
-      .number({
-        description: "The size of individual files can be a maximum of 512 MB.",
-      })
-      .int()
-      .min(1)
-      .max(512_000_000),
-  }),
-  purpose: z.enum(["fine-tune", "assistants"]),
-});
-
-export const handler: Handlers<FileObjectType | null> = {
+export const handler: Handlers<FileObject | null> = {
   async GET(_req: Request, ctx: FreshContext) {
     const params = Object.fromEntries(ctx.url.searchParams);
     const organization = ctx.state.organization as string;
 
-    const page = await FileRepository.findAllByPage<FileObjectType>(
-      organization,
-      pagableSchema.parse(params),
-      sortSchema.parse(params),
-    );
+    const data = await FileRepository.getInstance().findByPurpose(organization, params["purpose"]);
 
-    return Response.json(page);
+    return Response.json({ object: "list", data });
   },
 
   async POST(req: Request, ctx: FreshContext) {
     const form = await req.formData();
     const file = form.get("file") as File;
-    const fields = CreateFileRequest.parse({
+    const fields = UploadFileRequest.parse({
       file: file && {
         name: file.name,
         size: file.size,
+        type: file.type,
       },
       purpose: form.get("purpose") as string,
     });
@@ -54,7 +34,8 @@ export const handler: Handlers<FileObjectType | null> = {
       });
     }
     const organization = ctx.state.organization as string;
-    const allFileSize = await FileRepository.sumFileSize(organization);
+    const fileRepository = FileRepository.getInstance();
+    const allFileSize = await fileRepository.sumFileSize(organization);
     const max = getOrgFilesSizeMax();
     if (allFileSize + file.size > max) {
       throw new UnprocessableContent(undefined, {
@@ -62,23 +43,28 @@ export const handler: Handlers<FileObjectType | null> = {
       });
     }
 
-    const { value } = await FileRepository.create<FileObjectType>(
+    const operation = kv.atomic();
+    const fileObject = await fileRepository.create(
       {
         purpose: fields.purpose,
         bytes: fields.file.size,
         filename: fields.file.name,
+        filetype: fields.file.type,
       },
       organization,
+      operation,
     );
-    log.debug(`value: ${JSON.stringify(value)}`);
+    log.debug(`value: ${JSON.stringify(fileObject)}`);
 
     const dirPath = `${getFileDir()}/${organization}`;
     await ensureDir(dirPath);
-    Deno.writeFile(`${dirPath}/${value.id}`, file.stream(), {
+    Deno.writeFile(`${dirPath}/${fileObject.id}`, file.stream(), {
       create: true,
     });
 
-    return Response.json(value, {
+    await operation.commit();
+
+    return Response.json(fileObject, {
       status: 201,
     });
   },

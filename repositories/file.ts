@@ -1,45 +1,31 @@
-import { Repository } from "$/repositories/_repository.ts";
-import type { FileObjectType } from "$/schemas/file.ts";
+import { FileObject } from "@open-schemas/zod/openai";
+import { Repository } from "$/repositories/base.ts";
+import { FILE_KEY, FILE_OBJECT, FILE_PREFIX, ORGANIZATION } from "$/consts/api.ts";
 
-export class FileRepository extends Repository {
-  static idPrefix = "file";
-  static object = "file";
-  static parent = "organization";
-  static self = "file";
+export class FileRepository extends Repository<FileObject> {
+  private static instance: FileRepository;
 
-  static async sumFileSize(org: string) {
-    const files = await this.findAll<FileObjectType>(org);
+  private constructor() {
+    super(FILE_PREFIX, FILE_OBJECT, ORGANIZATION, FILE_KEY);
+  }
+
+  public static getInstance(): FileRepository {
+    if (!FileRepository.instance) {
+      FileRepository.instance = new FileRepository();
+    }
+    return FileRepository.instance;
+  }
+
+  async sumFileSize(org: string) {
+    const files = await this.findAll(org);
     return files.reduce((pre, cur) => pre + cur.bytes, 0);
   }
 
-  // private static genFileSizeKey(org: string) {
-  //   return [this.parent, org, "file_size"];
-  // }
-
-  // static async createWithBytes(
-  //   fields: Partial<FileObjectType>,
-  //   organization: string,
-  // ) {
-  //   const operation = kv.atomic();
-  //   const { value } = await this.create<FileObjectType>(
-  //     fields,
-  //     organization,
-  //     operation,
-  //   );
-  //   operation.sum(
-  //     [this.parent, organization, "file_size"],
-  //     BigInt(value.bytes),
-  //   );
-
-  //   const { ok } = await operation.commit();
-  //   if (!ok) throw new DbCommitError();
-  //   return { value };
-  // }
-
-  // static async destoryWithBytes(id: string, org: string, bytes: number) {
-  //   const operation = kv.atomic();
-  //   this.destory(id, org, operation);
-
-  //   operation.sum(this.genFileSizeKey(org), -BigInt(bytes));
-  // }
+  async findByPurpose(organization: string, purpose?: string) {
+    const files = await this.findAll(organization);
+    if (purpose) {
+      return files.filter((f) => f.purpose === purpose);
+    }
+    return files;
+  }
 }

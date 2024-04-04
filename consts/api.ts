@@ -24,5 +24,13 @@ export const STEP_KEY = "step";
 export const STEP_OBJECT = "thread.run.step";
 export const STEP_PREFIX = "step";
 
+export const FILE_KEY = "file";
+export const FILE_OBJECT = "file";
+export const FILE_PREFIX = "file";
+
 // 10 minutes, unit: second
 export const RUN_EXPIRED_DURATION = 10 * 60;
+
+// files api
+export const DEFAULT_FILE_DIR = "/tmp/assistant";
+export const DEFAULT_ORG_FILES_SIZE_MAX = 100_000_000_000; // 100GB

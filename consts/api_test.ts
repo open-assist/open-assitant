@@ -18,7 +18,12 @@ import {
   STEP_KEY,
   STEP_OBJECT,
   STEP_PREFIX,
+  FILE_KEY,
+  FILE_OBJECT,
+  FILE_PREFIX,
   RUN_EXPIRED_DURATION,
+  DEFAULT_FILE_DIR,
+  DEFAULT_ORG_FILES_SIZE_MAX,
 } from "$/consts/api.ts";
 
 describe("HTTP Headers", () => {
@@ -92,7 +97,29 @@ describe("Model consts", () => {
     assertEquals(STEP_PREFIX, "step");
   });
 
+  it("has FILE_KEY const", () => {
+    assertEquals(FILE_KEY, "file");
+  });
+
+  it("has FILE_OBJECT const", () => {
+    assertEquals(FILE_OBJECT, "file");
+  });
+
+  it("has FILE_PREFIX const", () => {
+    assertEquals(FILE_PREFIX, "file");
+  });
+});
+
+describe("API consts", () => {
   it("has RUN_EXPIRED_DURATION const", () => {
     assertEquals(RUN_EXPIRED_DURATION, 600);
+  });
+
+  it("has DEFAULT_FILE_DIR const", () => {
+    assertEquals(DEFAULT_FILE_DIR, "/tmp/assistant");
+  });
+
+  it("has DEFAULT_ORG_FILES_SIZE_MAX const", () => {
+    assertEquals(DEFAULT_ORG_FILES_SIZE_MAX, 100_000_000_000);
   });
 });

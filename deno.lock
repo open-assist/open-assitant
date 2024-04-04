@@ -3,7 +3,7 @@
   "packages": {
     "specifiers": {
       "jsr:@luca/esbuild-deno-loader@0.10.3": "jsr:@luca/esbuild-deno-loader@0.10.3",
-      "jsr:@open-schemas/zod@^0.8.4": "jsr:@open-schemas/zod@0.8.4",
+      "jsr:@open-schemas/zod@^0.9.2": "jsr:@open-schemas/zod@0.9.2",
       "jsr:@std/assert@^0.213.1": "jsr:@std/assert@0.213.1",
       "jsr:@std/assert@^0.221.0": "jsr:@std/assert@0.221.0",
       "jsr:@std/encoding@0.213": "jsr:@std/encoding@0.213.1",
@@ -25,8 +25,8 @@
           "jsr:@std/path@0.213"
         ]
       },
-      "@open-schemas/zod@0.8.4": {
-        "integrity": "df4fcabd136098cf9dea14212fd04b48f08cb0986cd21ee967c623120b5f1b46",
+      "@open-schemas/zod@0.9.2": {
+        "integrity": "60b855a1c03fa6e49a7d1f120c5764f5de0473d5ace0576dcef3c233f05fa61d",
         "dependencies": [
           "npm:zod@3.22.4"
         ]
@@ -507,7 +507,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@open-schemas/zod@^0.8.4",
+      "jsr:@open-schemas/zod@^0.9.2",
       "jsr:@std/assert@^0.221.0",
       "jsr:@std/log@^0.221.0",
       "jsr:@std/testing@^0.221.0"
