@@ -15,8 +15,11 @@ log.setup({
   },
 });
 
-kv.listenQueue(async (message: JobMessage) => {
-  await Job.execute(message);
-});
+const isBuildMode = Deno.args.includes("build");
+if (!isBuildMode) {
+  kv.listenQueue(async (message: JobMessage) => {
+    await Job.execute(message);
+  });
+}
 
 export default defineConfig({});
