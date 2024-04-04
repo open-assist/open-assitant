@@ -1,5 +1,10 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import { CreateThreadRequest, ThreadObject, Pagination, Ordering } from "@open-schemas/zod/openai";
+import {
+  CreateThreadRequest,
+  Ordering,
+  Pagination,
+  ThreadObject,
+} from "@open-schemas/zod/openai";
 import { ThreadRepository } from "$/repositories/thread.ts";
 
 export const handler: Handlers<ThreadObject | null> = {
@@ -17,10 +22,13 @@ export const handler: Handlers<ThreadObject | null> = {
   },
 
   async POST(req: Request, ctx: FreshContext) {
-    const fields = req.body ? { metadata: {} } : CreateThreadRequest.parse(await req.json());
+    const fields = req.body ? CreateThreadRequest.parse(await req.json()) : {};
     const organization = ctx.state.organization as string;
 
-    const thread = await ThreadRepository.getInstance().createWithMessages(fields, organization);
+    const thread = await ThreadRepository.getInstance().createWithMessages(
+      fields,
+      organization,
+    );
 
     return Response.json(thread, { status: 201 });
   },

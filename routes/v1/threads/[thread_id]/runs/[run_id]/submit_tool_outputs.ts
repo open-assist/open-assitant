@@ -19,9 +19,9 @@ export const handler: Handlers<RunObject | null> = {
     if (!step) {
       throw new UnprocessableContent();
     }
-    if (step.status !== "in_progress" || step.step_details.type !== "tool_calls") {
+    if (step.step_details.type !== "tool_calls") {
       throw new UnprocessableContent(undefined, {
-        cause: "Invalid status or step details of the step.",
+        cause: "Invalid step details of the step.",
       });
     }
 

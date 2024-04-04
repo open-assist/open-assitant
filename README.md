@@ -16,7 +16,7 @@ The goal of this project is to provide LLM developers with a unified platform to
 |            | Image input         | ✔        | ✘      | ✘         | ✘           |
 |            | Tool call           | ✔        | ✘      | ✘         | ✘           |
 |            | Streaming           | ✔        | ✘      | ✘         | ✘           |
-| Assistants | Default             | ✘         | ✘      | ✘         | ✘           |
+| Assistants | Default             | ✔        | ✘      | ✘         | ✘           |
 |            | Code Interpreter    | ✘         | ✘      | ✘         | ✘           |
 |            | Knowledge Retrieval | ✘         | ✘      | ✘         | ✘           |
-|            | Function Calling    | ✘         | ✘      | ✘         | ✘           |
+|            | Function Calling    | ✔        | ✘      | ✘         | ✘           |

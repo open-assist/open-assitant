@@ -1,3 +1,4 @@
+import * as log from "@std/log";
 import { StepRepository } from "$/repositories/step.ts";
 import { RunRepository } from "$/repositories/run.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
@@ -77,6 +78,7 @@ export class StepJob {
     await StepRepository.getInstance().update(
       step,
       {
+        type: stepDetails.type,
         step_details: stepDetails,
         status: "completed",
         completed_at: now(),
@@ -164,6 +166,7 @@ export class StepJob {
 
       const Client = await getClient();
       const response = await Client.runStep(model, messages, toolCallSteps, instructions, tools);
+      log.debug(`[StepJpb] runStep response: ${JSON.stringify(response)}`);
       const { content, tool_calls, usage } = response;
 
       let stepDetails: ToolCallsDetail | MessageCreationDetail = {} as MessageCreationDetail;
@@ -212,7 +215,7 @@ export class StepJob {
       await this.completeStep(run, step, stepDetails, usage, operation);
       await operation.commit();
     } catch (error) {
-      console.log("[step job]", error);
+      log.error(`[StepJob] ${error}`);
     }
   }
 }

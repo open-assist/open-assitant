@@ -356,10 +356,26 @@ export const CreateMessageResponseToAssistantResponse = CreateMessageResponse.tr
       content: [{ text }],
     } = response;
     const parts = text.split("<calls>");
+    let content, tool_calls;
+    if (parts.length === 2) {
+      const tool_call = XML.parse(parts[1]).tool_call;
+      tool_calls = Array.isArray(tool_call) ? tool_call : [tool_call];
+      tool_calls = tool_calls.map((tc) => {
+        return {
+          id: `call-${crypto.randomUUID()}`,
+          type: "function",
+          function: {
+            name: tc.function.name,
+            arguments: JSON.stringify(tc.function.parameters),
+          },
+        } as FunctionToolCall;
+      });
+    } else {
+      content = MessageTextContent.parse({ text: { value: parts[0] } });
+    }
     return {
-      content:
-        parts.length === 1 ? MessageTextContent.parse({ text: { value: parts[0] } }) : undefined,
-      tool_calls: parts.length === 2 ? XML.parse(parts[1]).tool_call : undefined,
+      content,
+      tool_calls,
       usage: {
         prompt_tokens: usage.input_tokens,
         completion_tokens: usage.output_tokens,
