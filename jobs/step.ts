@@ -1,4 +1,4 @@
-import * as log from "@std/log";
+import * as log from "$std/log/mod.ts";
 import { StepRepository } from "$/repositories/step.ts";
 import { RunRepository } from "$/repositories/run.ts";
 import { AssistantRepository } from "$/repositories/assistant.ts";
@@ -9,6 +9,7 @@ import {
   FunctionToolCall,
   MessageCreationDetail,
   MessageObject,
+  MessageTextContent,
   RunObject,
   StepObject,
   Tool,
@@ -17,19 +18,24 @@ import {
   Usage,
 } from "@open-schemas/zod/openai";
 import { now } from "$/utils/date.ts";
+import { FileRepository } from "$/repositories/file.ts";
+
+function accumulateUsage(next: Usage, current?: Usage | null): Usage {
+  if (current) {
+    return {
+      prompt_tokens: current.prompt_tokens + next.prompt_tokens,
+      completion_tokens: current.completion_tokens + next.completion_tokens,
+      total_tokens: current.total_tokens + next.total_tokens,
+    };
+  }
+  return next;
+}
+
+function isFunctionToolCall(toolCalls: ToolCall[]) {
+  return toolCalls.find((c) => c.type === "function");
+}
 
 export class StepJob {
-  private static accumulateUsage(next: Usage, current?: Usage | null): Usage {
-    if (current) {
-      return {
-        prompt_tokens: current.prompt_tokens + next.prompt_tokens,
-        completion_tokens: current.completion_tokens + next.completion_tokens,
-        total_tokens: current.total_tokens + next.total_tokens,
-      };
-    }
-    return next;
-  }
-
   private static async createMessage(run: RunObject): Promise<MessageObject> {
     return await MessageRepository.getInstance().create(
       {
@@ -46,20 +52,13 @@ export class StepJob {
   private static async completeMessage(
     run: RunObject,
     message: MessageObject,
-    content: string,
+    content: MessageTextContent,
     operation: Deno.AtomicOperation,
   ) {
     return await MessageRepository.getInstance().update(
       message,
       {
-        content: [
-          {
-            type: "text",
-            text: {
-              value: content,
-            },
-          },
-        ],
+        content: [content],
         status: "completed",
         completed_at: now(),
       },
@@ -102,7 +101,7 @@ export class StepJob {
       {
         status: "completed",
         completed_at: now(),
-        usage: this.accumulateUsage(usage, run.usage),
+        usage: accumulateUsage(usage, run.usage),
         model,
         instructions,
         tools,
@@ -133,10 +132,6 @@ export class StepJob {
     );
   }
 
-  private static isFunctionToolCall(toolCalls: ToolCall[]) {
-    return toolCalls.find((c) => c.type === "function");
-  }
-
   public static async execute(stepId: string) {
     const stepRepository = StepRepository.getInstance();
     const step = await stepRepository.findById(stepId);
@@ -159,13 +154,22 @@ export class StepJob {
       (s: StepObject | null) => s && s.step_details && s.step_details.type === "tool_calls",
     ) as StepObject[];
 
+    const model = run.model || assistant.model;
+    const instructions = run.instructions || assistant.instructions;
+    const tools = run.tools || assistant.tools;
+    const files = assistant.file_ids
+      ? await FileRepository.getInstance().findByIds(assistant.file_ids)
+      : undefined;
     try {
-      const model = run.model || assistant.model;
-      const instructions = run.instructions || assistant.instructions;
-      const tools = assistant.tools;
-
       const Client = await getClient();
-      const response = await Client.runStep(model, messages, toolCallSteps, instructions, tools);
+      const response = await Client.runStep(
+        model,
+        messages,
+        toolCallSteps,
+        instructions,
+        tools,
+        files,
+      );
       log.debug(`[StepJpb] runStep response: ${JSON.stringify(response)}`);
       const { content, tool_calls, usage } = response;
 
@@ -173,34 +177,33 @@ export class StepJob {
       const operation = kv.atomic();
       if (tool_calls) {
         // tool calls
-        stepDetails = {
-          type: "tool_calls",
-          tool_calls,
-        } as ToolCallsDetail;
-
-        if (this.isFunctionToolCall(tool_calls)) {
+        if (isFunctionToolCall(tool_calls)) {
           await this.setRunRequiresAction(run, tool_calls as FunctionToolCall[], operation);
         } else {
-          // TODO: execute code interpreter code and retrieval tools
-
-          // trigger next step
-          await stepRepository.createWithThread(
-            {
-              assistant_id: run.assistant_id,
-              thread_id: run.thread_id,
-              run_id: run.id,
-              status: "in_progress",
-            },
-            run.id,
-            run.thread_id,
-            operation,
-          );
+          tool_calls.forEach((t: ToolCall) => {
+            const args = JSON.stringify({ toolCallId: t.id });
+            if (t.type === "retrieval") {
+              operation.enqueue({ type: "retrieval", args });
+            } else if (t.type === "code_interpreter") {
+              operation.enqueue({ type: "code_interpreter", args });
+            }
+          });
         }
+        stepDetails = { type: "tool_calls", tool_calls } as ToolCallsDetail;
+        await stepRepository.update(
+          step,
+          {
+            type: stepDetails.type,
+            step_details: stepDetails,
+          },
+          run.id,
+          operation,
+        );
       } else if (content) {
         // message creation
         const message = await this.createMessage(run);
         // complete message
-        await this.completeMessage(run, message, content.text.value, operation);
+        await this.completeMessage(run, message, content, operation);
         // construct step details
         stepDetails = {
           type: "message_creation",
@@ -208,14 +211,15 @@ export class StepJob {
             message_id: message.id,
           },
         } as MessageCreationDetail;
+        // complete step
+        await this.completeStep(run, step, stepDetails, usage, operation);
         // complete run
         await this.completeRun(run, usage, operation, model, instructions, tools);
       }
-      // complete step
-      await this.completeStep(run, step, stepDetails, usage, operation);
       await operation.commit();
     } catch (error) {
       log.error(`[StepJob] ${error}`);
+      // TODO: set step and run failed
     }
   }
 }

@@ -49,20 +49,15 @@ export class RunRepository extends Repository<RunObject> {
       operation,
     );
 
-    const resourceMessage = {
-      resourceType: "run",
-      resourceId: value.id,
-    } as JobMessage;
-
     operation
       .enqueue({
-        ...resourceMessage,
-        args: JSON.stringify({ action: "perform" }),
+        type: "run",
+        args: JSON.stringify({ runId: value.id, action: "perform" }),
       })
       .enqueue(
         {
-          ...resourceMessage,
-          args: JSON.stringify({ action: "expire" }),
+          type: "run",
+          args: JSON.stringify({ runId: value.id, action: "expire" }),
         },
         {
           delay: RUN_EXPIRED_DURATION * 1000,
@@ -87,9 +82,8 @@ export class RunRepository extends Repository<RunObject> {
     await kv
       .atomic()
       .enqueue({
-        resourceType: "run",
-        resourceId: newRun.id,
-        args: JSON.stringify({ action: "cancel" }),
+        type: "run",
+        args: JSON.stringify({ runId: newRun.id, action: "cancel" }),
       } as JobMessage)
       .set(this.genKvKey(threadId, (old as RunObject).id), newRun)
       .commit();
@@ -104,20 +98,16 @@ export class RunRepository extends Repository<RunObject> {
       expires_at: now() + RUN_EXPIRED_DURATION,
     } as RunObject;
 
-    const resourceMessage = {
-      resourceType: "run",
-      resourceId: newRun.id,
-    } as JobMessage;
     const atomicOp = kv
       .atomic()
       .enqueue({
-        ...resourceMessage,
-        args: JSON.stringify({ action: "perform" }),
+        type: "run",
+        args: JSON.stringify({ runId: newRun.id, action: "perform" }),
       })
       .enqueue(
         {
-          ...resourceMessage,
-          args: JSON.stringify({ action: "expire" }),
+          type: "run",
+          args: JSON.stringify({ runId: newRun.id, action: "expire" }),
         },
         {
           delay: RUN_EXPIRED_DURATION * 1000,

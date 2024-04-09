@@ -8,7 +8,7 @@ import {
   ChatCompletionChunkChoice,
   ChatCompletionToolCall,
 } from "@open-schemas/zod/openai";
-import * as log from "@std/log";
+import * as log from "$std/log/mod.ts";
 import {
   DONE_EVENT,
   MESSAGE_START,
@@ -24,8 +24,8 @@ import { XML } from "$/utils/xml.ts";
 import { ulid } from "$std/ulid/mod.ts";
 import { genSystemFingerprint } from "$/utils/llm.ts";
 
-const MessageStartEventToChatCompletionChunkObject =
-  MessageStartEvent.transform(async (event: MessageStartEvent) => {
+const MessageStartEventToChatCompletionChunkObject = MessageStartEvent.transform(
+  async (event: MessageStartEvent) => {
     const {
       message: { model, role },
     } = event;
@@ -45,7 +45,8 @@ const MessageStartEventToChatCompletionChunkObject =
       model,
       system_fingerprint: await genSystemFingerprint(),
     });
-  });
+  },
+);
 
 const ContentBlockDeltaEventToChioce = ContentBlockDeltaEvent.transform(
   (event: ContentBlockDeltaEvent) => {
@@ -62,19 +63,14 @@ const ContentBlockDeltaEventToChioce = ContentBlockDeltaEvent.transform(
   },
 );
 
-const MessageDeltaEventToChoice = MessageDeltaEvent.transform(
-  (event: MessageDeltaEvent) => {
-    const {
-      delta: { stop_reason, stop_sequence },
-    } = event;
-    return {
-      finish_reason: convertStopReasonToFinishReason(
-        stop_reason,
-        stop_sequence,
-      ),
-    } as ChatCompletionChunkChoice;
-  },
-);
+const MessageDeltaEventToChoice = MessageDeltaEvent.transform((event: MessageDeltaEvent) => {
+  const {
+    delta: { stop_reason, stop_sequence },
+  } = event;
+  return {
+    finish_reason: convertStopReasonToFinishReason(stop_reason, stop_sequence),
+  } as ChatCompletionChunkChoice;
+});
 
 const EVENT_REGEX = /^event:\s(\w+)$/m;
 const DATA_REGEX = /^data:\s([\w\W]+)/m;
@@ -133,10 +129,7 @@ export class MessageToChunkStream extends TransformStream {
           const [, dataJson] = matches;
           const data = JSON.parse(dataJson);
           if (data.type === MESSAGE_START) {
-            this.chunk =
-              await MessageStartEventToChatCompletionChunkObject.parseAsync(
-                data,
-              );
+            this.chunk = await MessageStartEventToChatCompletionChunkObject.parseAsync(data);
             if (this.model) this.chunk.model = this.model;
             this.previousEvent = data.type;
             continue;
@@ -155,14 +148,9 @@ export class MessageToChunkStream extends TransformStream {
                 },
               ];
               this.chunk.created = now();
-              controller.enqueue(
-                this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`),
-              );
+              controller.enqueue(this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`));
             }
-          } else if (
-            data.type === CONTENT_BLOCK_STOP &&
-            this.callResponseStarting
-          ) {
+          } else if (data.type === CONTENT_BLOCK_STOP && this.callResponseStarting) {
             try {
               const xml = `${this.callResponse}</calls>`;
               const calls = XML.parse(xml).calls;
@@ -189,9 +177,7 @@ export class MessageToChunkStream extends TransformStream {
               );
               this.chunk.choices[0].delta.content = null;
               this.chunk.created = now();
-              controller.enqueue(
-                this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`),
-              );
+              controller.enqueue(this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`));
             } catch (e) {
               log.error(e);
             }
@@ -208,9 +194,7 @@ export class MessageToChunkStream extends TransformStream {
               },
             ];
             this.chunk.created = now();
-            controller.enqueue(
-              this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`),
-            );
+            controller.enqueue(this.encoder.encode(`data: ${JSON.stringify(this.chunk)}\n\n`));
           }
         }
       },

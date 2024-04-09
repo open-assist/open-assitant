@@ -6,8 +6,6 @@ import {
   OLLAMA,
   OPENAI,
   VERTEX_AI,
-  DEFAULT_ANTHROPIC_API_URL,
-  DEFAULT_ANTHROPIC_VERSION,
   MESSAGE_START,
   MESSAGE_DETLA,
   MESSAGE_STOP,
@@ -43,14 +41,6 @@ describe("LLM provider consts", () => {
 });
 
 describe("Anthropic consts", () => {
-  it("DEFAULT_ANTHROPIC_API_URL exists", () => {
-    assertExists(DEFAULT_ANTHROPIC_API_URL);
-  });
-
-  it("DEFAULT_ANTHROPIC_VERSION exists", () => {
-    assertExists(DEFAULT_ANTHROPIC_VERSION);
-  });
-
   it("MESSAGE_START exists", () => {
     assertExists(MESSAGE_START);
   });

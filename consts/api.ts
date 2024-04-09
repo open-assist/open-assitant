@@ -1,6 +1,9 @@
 export const TEXT_EVENT_STREAM_HEADER = {
   "Content-Type": "text/event-stream",
 };
+export const APPLICATION_JSON_HEADER = {
+  "Content-Type": "application/json",
+};
 
 export const ORGANIZATION = "organization";
 
@@ -27,6 +30,8 @@ export const STEP_PREFIX = "step";
 export const FILE_KEY = "file";
 export const FILE_OBJECT = "file";
 export const FILE_PREFIX = "file";
+
+export const FILE_INFO_KEY = "file_info";
 
 // 10 minutes, unit: second
 export const RUN_EXPIRED_DURATION = 10 * 60;

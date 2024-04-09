@@ -6,6 +6,7 @@ import {
   StepObject,
   Tool,
   AssistantResponse,
+  FileObject,
 } from "@open-schemas/zod/openai";
 
 /**
@@ -57,6 +58,7 @@ export class Base {
     _steps: StepObject[],
     _instructions?: string | null,
     _tools?: Tool[] | null,
+    _files?: FileObject[],
   ): Promise<AssistantResponse> {
     throw new NotImplemented("Base.runStep");
   }

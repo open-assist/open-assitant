@@ -19,3 +19,10 @@ export const ANTHROPIC_VERSION = "ANTHROPIC_VERSION";
 // file
 export const FILE_DIR = "FILE_DIR";
 export const ORG_FILES_SIZE_MAX = "ORG_FILES_SIZE_MAX";
+
+// env names for retrieval
+export const RETRIEVAL_PROVIDER = "RETRIEVAL_PROVIDER";
+
+// open retrieval
+export const OPEN_RETRIEVAL_API_URL = "OPEN_RETRIEVAL_API_URL";
+export const OPEN_RETRIEVAL_API_KEY = "OPEN_RETRIEVAL_API_KEY";

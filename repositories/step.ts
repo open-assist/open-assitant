@@ -45,7 +45,7 @@ export class StepRepository extends Repository<StepObject> {
     operation
       .check({ key: thridKey, versionstamp: null })
       .set(thridKey, key)
-      .enqueue({ resourceType: "step", resourceId: value.id } as JobMessage);
+      .enqueue({ type: "step", args: JSON.stringify({ stepId: value.id }) } as JobMessage);
 
     if (commit) {
       const { ok } = await operation.commit();
@@ -66,7 +66,7 @@ export class StepRepository extends Repository<StepObject> {
       kv.list<Deno.KvKey>(selector, options),
       ({ value }) => value,
     );
-
+    // TODO: TypeError: too many ranges (max 10)
     return (await kv.getMany<StepObject[]>(keys)).map(({ value }) => value);
   }
 }

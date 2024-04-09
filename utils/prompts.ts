@@ -35,7 +35,7 @@ In this environment you have access to a set of tools you can use to answer the 
 ...
 </calls>
 
-If you need to call multiple tools, put them all in <calls></calls>.
+If you need to call one or more tools, put them all in <calls></calls>.
 `;
 
 export const CODE_INTERPRETER_TOOLS_PROMPT = `\n## Code Interpreter Tools
@@ -77,7 +77,7 @@ Function tools allow users to describe functions to Assistant and have it intell
 
 export const RETRIEVAL_TOOLS_PROMPT = `\n## Revtrieval Tools
 
-Retrieval tools augment Assistant with knowledge from outside its model, such as proprietary product information or documents provided by users.
+Tools for browsing the files uploaded by the user.
 
 <tools>
 <tool>
@@ -102,24 +102,26 @@ Runs a query over the file(s) uploaded in the current conversation and displays 
 <type>retrieval</type>
 <retrieval>
 <name>open</name>
-<description>Opens the document with the ID and displays it.</description>
+<description>Get the documents with the file ID and displays it.</description>
 <parameters>
 <type>object</type>
 <properties>
-<url>
+<file_id>
 <type>string</type>
-<description>URL must be a file ID (typically a UUID), not a path.</description>
-</url>
+<description>The ID of file.</description>
+</file_id>
 </properties>
 </parameters>
 </retrieval>
 </tool>
 </tools>
 
-- For tasks that require a comprehensive analysis of the files like summarization or translation, start your work by opening the relevant files using the open function and passing in the document ID.
+- For tasks that require a comprehensive analysis of the files like summarization or translation, start your work by opening the relevant files using the open function and passing in the file ID.
 - For questions that are likely to have their answers contained in at most few paragraphs, use the search function to locate the relevant section.
 
 Think carefully about how the information you find relates to the user's request. Respond as soon as you find information that clearly answers the request. If you do not find the exact answer, make sure to both read the beginning of the document using open and to make up to 3 searches to look through later sections of the document.
 `;
+
+export const FILES_PROMPT = `\n# Files \n`;
 
 export const USER_PROMPT = `\n# User's Prompts\n`;

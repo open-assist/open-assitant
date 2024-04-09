@@ -11,11 +11,8 @@ export class RunJob {
    * @param runId The ID of run.
    * @param args The arguments for run job.
    */
-  public static async execute(
-    runId: string,
-    args: { action: "perform" | "cancel" | "expire" },
-  ) {
-    const { action } = args;
+  public static async execute(args: { action: "perform" | "cancel" | "expire"; runId: string }) {
+    const { action, runId } = args;
     switch (action) {
       case "perform":
         await this.perform(runId);
@@ -51,12 +48,11 @@ export class RunJob {
       run.thread_id,
       operation,
     );
-    operation
-      .set(runKey, {
-        ...run,
-        status: "in_progress",
-        started_at: now(),
-      });
+    operation.set(runKey, {
+      ...run,
+      status: "in_progress",
+      started_at: now(),
+    });
 
     await operation.commit();
   }

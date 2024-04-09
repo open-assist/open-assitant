@@ -1,4 +1,4 @@
-import * as log from "@std/log";
+import * as log from "$std/log/mod.ts";
 import { defineConfig } from "$fresh/server.ts";
 import { LOG_LEVEL } from "$/consts/envs.ts";
 import { kv } from "$/repositories/base.ts";

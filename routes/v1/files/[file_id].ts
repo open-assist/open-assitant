@@ -22,7 +22,7 @@ export const handler: Handlers<FileObject | null> = {
     await getFile(ctx);
     const { id, parentId } = getIDs(ctx);
 
-    await FileRepository.getInstance().destory(id, parentId);
+    await FileRepository.getInstance().destoryWithFile(id, parentId);
     return Response.json(DeleteFileResponse.parse({ id }));
   },
 };

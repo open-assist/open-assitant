@@ -8,6 +8,8 @@ import {
   CreateMessageResponse,
   StopReason,
   Message,
+  ToolUseContent,
+  ToolResultContent,
 } from "@open-schemas/zod/anthropic";
 import {
   CreateChatCompletionRequest,
@@ -25,6 +27,7 @@ import {
   RetrievalToolCall,
   ToolCall,
   AssistantResponse,
+  RetrievalTool,
 } from "@open-schemas/zod/openai";
 import { CALLS_STOP, CHAT_COMPLETION_PREFIX } from "$/consts/llm.ts";
 import { TOOLS_PROMPT, FUNCTION_TOOLS_PROMPT } from "$/utils/prompts.ts";
@@ -242,17 +245,19 @@ export const CreateMessageResponseToChatCompletionObject = CreateMessageResponse
       ...rest,
       id: `${CHAT_COMPLETION_PREFIX}-${ulid()}`,
       choices: content.map((c, index: number) => {
-        const parts = c.text.split("<calls>");
-        const tool_calls = parts.length === 2 ? parseXmlToFunctionToolCalls(parts[1]) : undefined;
-        return {
-          index,
-          finish_reason,
-          message: {
-            role,
-            content: parts[0],
-            tool_calls,
-          },
-        };
+        if (c.type === "text") {
+          const parts = c.text.split("<calls>");
+          const tool_calls = parts.length === 2 ? parseXmlToFunctionToolCalls(parts[1]) : undefined;
+          return {
+            index,
+            finish_reason,
+            message: {
+              role,
+              content: parts[0],
+              tool_calls,
+            },
+          };
+        }
       }),
       usage: {
         prompt_tokens: usage.input_tokens,
@@ -330,9 +335,32 @@ function FunctionToolCallToMessages(call: FunctionToolCall): Message[] {
   ];
 }
 
-function RetrievalToolCallToMessages(_r: RetrievalToolCall): Message[] {
-  // TODO: implement
-  return [];
+function RetrievalToolCallToMessages(call: RetrievalToolCall): Message[] {
+  const {
+    id,
+    retrieval: { name, input, output },
+  } = call;
+  return [
+    {
+      role: "assistant",
+      content: [
+        ToolUseContent.parse({
+          id,
+          name,
+          input: JSON.parse(input),
+        }),
+      ],
+    },
+    {
+      role: "user",
+      content: [
+        ToolResultContent.parse({
+          tool_use_id: id,
+          content: output,
+        }),
+      ],
+    },
+  ];
 }
 
 export const StepObjectToMessages = StepObject.transform((step: StepObject): Message[] => {
@@ -351,27 +379,38 @@ export const StepObjectToMessages = StepObject.transform((step: StepObject): Mes
 
 export const CreateMessageResponseToAssistantResponse = CreateMessageResponse.transform(
   (response: CreateMessageResponse) => {
-    const {
-      usage,
-      content: [{ text }],
-    } = response;
-    const parts = text.split("<calls>");
+    const { usage, content: aContent, stop_reason } = response;
     let content, tool_calls;
-    if (parts.length === 2) {
-      const tool_call = XML.parse(parts[1]).tool_call;
-      tool_calls = Array.isArray(tool_call) ? tool_call : [tool_call];
-      tool_calls = tool_calls.map((tc) => {
+    if (stop_reason === "tool_use") {
+      const toolUses = aContent.filter((c) => c.type === "tool_use") as ToolUseContent[];
+      tool_calls = toolUses.map((t: ToolUseContent) => {
+        const { name, input } = t;
+        const id = `call-${crypto.randomUUID()}`;
+
+        if (name.startsWith("retrieval_")) {
+          return {
+            id,
+            type: "retrieval",
+            retrieval: {
+              name,
+              input: JSON.stringify(input),
+            },
+          };
+        }
         return {
-          id: `call-${crypto.randomUUID()}`,
+          id,
           type: "function",
           function: {
-            name: tc.function.name,
-            arguments: JSON.stringify(tc.function.parameters),
+            name: name,
+            arguments: JSON.stringify(input),
           },
-        } as FunctionToolCall;
+        };
       });
     } else {
-      content = MessageTextContent.parse({ text: { value: parts[0] } });
+      content = (aContent as TextContent[]).map((c: TextContent) => {
+        const { text } = c;
+        return MessageTextContent.parse({ text: { value: text } });
+      });
     }
     return {
       content,
@@ -384,3 +423,35 @@ export const CreateMessageResponseToAssistantResponse = CreateMessageResponse.tr
     } as AssistantResponse;
   },
 );
+
+export const ConvertRetrievalToolToTools = RetrievalTool.transform((_t) => {
+  return [
+    {
+      name: "retrieval_open",
+      description: "Opens the file with the ID and displays it.",
+      input_schema: {
+        type: "object",
+        properties: {
+          file_id: {
+            type: "string",
+            description: "The ID of file.",
+          },
+        },
+      },
+    },
+    {
+      name: "retrieval_search",
+      description:
+        "Runs a query over the file(s) uploaded in the current thread and displays the results.",
+      input_schema: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The keywords to search.",
+          },
+        },
+      },
+    },
+  ];
+});

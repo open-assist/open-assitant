@@ -1,23 +1,21 @@
-import { error } from "@std/log";
+import { error } from "$std/log/mod.ts";
 import { RunJob } from "$/jobs/run.ts";
 import { StepJob } from "$/jobs/step.ts";
+import { RetrievalJob } from "$/jobs/retrieval.ts";
+import { CodeInterpreterJob } from "$/jobs/code_interpreter.ts";
 
 /**
  * Represents a job message containing information about a job to be executed.
  */
 export interface JobMessage {
   /**
-   * The type of the resource, either "run" or "step".
+   * Optional arguments for the job.
    */
-  resourceType: "run" | "step";
+  args: string;
   /**
-   * The unique identifier of the resource.
+   * The type of job.
    */
-  resourceId: string;
-  /**
-   *  Optional arguments for the job.
-   */
-  args?: string;
+  type: "run" | "step" | "retrieval" | "code_interpreter";
 }
 
 /**
@@ -32,16 +30,23 @@ export class Job {
    * @returns A promise that resolves when the job execution is complete.
    */
   public static async execute(message: JobMessage) {
-    const { resourceId, resourceType, args } = message;
-    switch (resourceType) {
+    const { args, type } = message;
+    const params = JSON.parse(args as string);
+    switch (type) {
       case "run":
-        await RunJob.execute(resourceId, JSON.parse(args as string));
+        await RunJob.execute(params);
         break;
       case "step":
-        await StepJob.execute(resourceId);
+        await StepJob.execute(params);
+        break;
+      case "retrieval":
+        await RetrievalJob.execute(params);
+        break;
+      case "code_interpreter":
+        await CodeInterpreterJob.execute(params);
         break;
       default:
-        error(`Unknown the resource type(${resourceType}) of job message.`);
+        error(`Unknown the type(${type}) of job message.`);
     }
   }
 }
