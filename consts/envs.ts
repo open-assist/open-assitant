@@ -1,6 +1,9 @@
 // deno
 export const DENO_KV_PATH = "DENO_KV_PATH";
 
+// for single tenant
+export const NO_TENANT = "NO_TENANT";
+
 // the evn names for log
 export const LOG_LEVEL = "LOG_LEVEL";
 

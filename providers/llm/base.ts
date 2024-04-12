@@ -5,9 +5,9 @@ import {
   MessageObject,
   StepObject,
   Tool,
-  AssistantResponse,
   FileObject,
 } from "@open-schemas/zod/openai";
+import { AssistantResponse } from "$open-schemas/zod/openai/mod.ts";
 
 /**
  * Base class for language model providers.
@@ -52,7 +52,7 @@ export class Base {
     throw new NotImplemented("Base.createChatCompletion");
   }
 
-  static async runStep(
+  static runStep(
     _model: string,
     _messages: MessageObject[],
     _steps: StepObject[],

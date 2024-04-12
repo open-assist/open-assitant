@@ -17,11 +17,11 @@ import {
   CreateMessageResponseToAssistantResponse,
   MessageObjectToMessage,
   StepObjectToMessages,
+  ConvertRetrievalToolToTools,
 } from "$/schemas/anthropic/messages.ts";
 import { MessageToChunkStream } from "$/schemas/anthropic/streaming_messages.ts";
 import { USER_PROMPT, FILES_PROMPT } from "$/utils/prompts.ts";
 import { XML } from "$/utils/xml.ts";
-import { ConvertRetrievalToolToTools } from "$/schemas/anthropic/messages.ts";
 import { getEnv } from "$/utils/env.ts";
 import { APPLICATION_JSON_HEADER } from "$/consts/api.ts";
 

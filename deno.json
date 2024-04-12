@@ -16,6 +16,7 @@
   "imports": {
     "$/": "./",
     "$fresh/": "https://deno.land/x/fresh@1.6.8/",
+    "$open-schemas/": "https://deno.land/x/open_schemas@2.0.0/",
     "$std/": "https://deno.land/std@0.219.0/",
     "@open-schemas/zod": "jsr:@open-schemas/zod@^0.10.2",
     "@std/assert": "jsr:@std/assert@^0.221.0",

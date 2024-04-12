@@ -26,9 +26,9 @@ import {
   FunctionToolCall,
   RetrievalToolCall,
   ToolCall,
-  AssistantResponse,
   RetrievalTool,
 } from "@open-schemas/zod/openai";
+import { AssistantResponse } from "$/schemas/assistant.ts";
 import { CALLS_STOP, CHAT_COMPLETION_PREFIX } from "$/consts/llm.ts";
 import { TOOLS_PROMPT, FUNCTION_TOOLS_PROMPT } from "$/utils/prompts.ts";
 import { XML } from "$/utils/xml.ts";

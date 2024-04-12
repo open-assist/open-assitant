@@ -36,6 +36,8 @@ export const FILE_INFO_KEY = "file_info";
 // 10 minutes, unit: second
 export const RUN_EXPIRED_DURATION = 10 * 60;
 
+export const DEFAULT_ORGANIZATION = "org";
+
 // files api
 export const DEFAULT_FILE_DIR = "/tmp/assistant";
 export const DEFAULT_ORG_FILES_SIZE_MAX = 100_000_000_000; // 100GB

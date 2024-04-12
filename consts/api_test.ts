@@ -24,6 +24,7 @@ import {
   RUN_EXPIRED_DURATION,
   DEFAULT_FILE_DIR,
   DEFAULT_ORG_FILES_SIZE_MAX,
+  DEFAULT_ORGANIZATION,
 } from "$/consts/api.ts";
 
 describe("HTTP Headers", () => {
@@ -121,5 +122,9 @@ describe("API consts", () => {
 
   it("has DEFAULT_ORG_FILES_SIZE_MAX const", () => {
     assertEquals(DEFAULT_ORG_FILES_SIZE_MAX, 100_000_000_000);
+  });
+
+  it("has DEFAULT_ORGANIZATION const", () => {
+    assertEquals(DEFAULT_ORGANIZATION, "org");
   });
 });

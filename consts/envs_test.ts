@@ -11,6 +11,7 @@ import {
   ANTHROPIC_VERSION,
   FILE_DIR,
   ORG_FILES_SIZE_MAX,
+  NO_TENANT,
 } from "$/consts/envs.ts";
 
 describe("Log variables", () => {
@@ -51,12 +52,16 @@ describe("Anthropic variables", () => {
   });
 });
 
-describe("Files API variables", () => {
+describe("API variables", () => {
   it("The FILE_DIR const exists", () => {
     assertExists(FILE_DIR);
   });
 
   it("The ORG_FILES_SIZE_MAX const exists", () => {
     assertExists(ORG_FILES_SIZE_MAX);
+  });
+
+  it("The NO_TENANT const exists", () => {
+    assertExists(NO_TENANT);
   });
 });
