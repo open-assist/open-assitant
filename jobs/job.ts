@@ -3,6 +3,7 @@ import { RunJob } from "$/jobs/run.ts";
 import { StepJob } from "$/jobs/step.ts";
 import { RetrievalJob } from "$/jobs/retrieval.ts";
 import { CodeInterpreterJob } from "$/jobs/code_interpreter.ts";
+import { FileJob } from "$/jobs/file.ts";
 
 /**
  * Represents a job message containing information about a job to be executed.
@@ -15,7 +16,7 @@ export interface JobMessage {
   /**
    * The type of job.
    */
-  type: "run" | "step" | "retrieval" | "code_interpreter";
+  type: "run" | "step" | "retrieval" | "code_interpreter" | "file";
 }
 
 /**
@@ -44,6 +45,9 @@ export class Job {
         break;
       case "code_interpreter":
         await CodeInterpreterJob.execute(params);
+        break;
+      case "file":
+        await FileJob.execute(params);
         break;
       default:
         error(`Unknown the type(${type}) of job message.`);

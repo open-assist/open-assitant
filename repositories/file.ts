@@ -5,6 +5,7 @@ import { Repository, kv } from "$/repositories/base.ts";
 import { FILE_KEY, FILE_OBJECT, FILE_PREFIX, ORGANIZATION, FILE_INFO_KEY } from "$/consts/api.ts";
 import { FileInfo } from "$/schemas/file_info.ts";
 import { ensureDir, getFileDir } from "$/utils/file.ts";
+import { JobMessage } from "$/jobs/job.ts";
 
 export class FileRepository extends Repository<FileObject> {
   private static instance: FileRepository;
@@ -37,18 +38,6 @@ export class FileRepository extends Repository<FileObject> {
     return [ORGANIZATION, organization, FILE_INFO_KEY, id];
   }
 
-  // async createWithInfo(
-  //   fields: Partial<FileObject>,
-  //   info: FileInfo,
-  //   organization: string,
-  //   operation: Deno.AtomicOperation,
-  // ) {
-  //   const file = await this.create(fields, organization, operation);
-  //   const fileInfoKey = this.genInfoKey(organization, file.id);
-  //   operation.check({ key: fileInfoKey, versionstamp: null }).set(fileInfoKey, info);
-  //   return file;
-  // }
-
   async createWithFile(fields: Partial<FileObject>, organization: string, file: File) {
     const operation = kv.atomic();
     const fileObject = await this.create(fields, organization, operation);
@@ -66,6 +55,13 @@ export class FileRepository extends Repository<FileObject> {
       create: true,
     });
 
+    operation.enqueue({
+      type: "file",
+      args: JSON.stringify({
+        action: "create",
+        fileId: fileObject.id,
+      }),
+    } as JobMessage);
     await operation.commit();
 
     return fileObject;
@@ -77,6 +73,13 @@ export class FileRepository extends Repository<FileObject> {
     operation.delete(fileInfoKey);
     const fileInfo = (await kv.get<FileInfo>(fileInfoKey)).value;
     await this.destory(id, organization, operation);
+    operation.enqueue({
+      type: "file",
+      args: JSON.stringify({
+        action: "delete",
+        fileId: id,
+      }),
+    } as JobMessage);
     await operation.commit();
     try {
       await Deno.remove(`${getFileDir()}/${organization}/${fileInfo?.file_path}`);

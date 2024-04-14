@@ -30,6 +30,7 @@ export class OpenRetrieval extends Base {
 
   static async search(query: string, filePaths: string[]): Promise<string> {
     const response = await this._fetch(`/files/search`, {
+      method: "POST",
       body: JSON.stringify({
         query,
         file_names: filePaths,
@@ -39,5 +40,27 @@ export class OpenRetrieval extends Base {
       },
     });
     return response.text();
+  }
+
+  static async create_file_job(org: string, id: string, name: string, type: string): Promise<void> {
+    await this._fetch(`/files/${id}/job`, {
+      method: "POST",
+      body: JSON.stringify({
+        file_name: name,
+        file_type: type,
+      }),
+      headers: {
+        [X_RETRIEVAL_ORGANIZATION]: org,
+      },
+    });
+  }
+
+  static async delete_file_index(org: string, id: string): Promise<void> {
+    await this._fetch(`/files/${id}/index`, {
+      method: "DELETE",
+      headers: {
+        [X_RETRIEVAL_ORGANIZATION]: org,
+      },
+    });
   }
 }
