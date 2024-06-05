@@ -1,19 +1,19 @@
 import { describe, it } from "@std/testing/bdd";
 import { assertExists } from "@std/assert";
 import {
-  CALLS_STOP,
   ANTHROPIC,
+  CALLS_STOP,
+  CHAT_COMPLETION_PREFIX,
+  CONTENT_BLOCK_DELTA,
+  CONTENT_BLOCK_START,
+  CONTENT_BLOCK_STOP,
+  DONE_EVENT,
+  MESSAGE_DETLA,
+  MESSAGE_START,
+  MESSAGE_STOP,
   OLLAMA,
   OPENAI,
   VERTEX_AI,
-  MESSAGE_START,
-  MESSAGE_DETLA,
-  MESSAGE_STOP,
-  CONTENT_BLOCK_START,
-  CONTENT_BLOCK_DELTA,
-  CONTENT_BLOCK_STOP,
-  CHAT_COMPLETION_PREFIX,
-  DONE_EVENT,
 } from "$/consts/llm.ts";
 
 describe("LLM consts", () => {

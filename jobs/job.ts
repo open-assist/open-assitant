@@ -3,6 +3,7 @@ import { RunJob } from "$/jobs/run.ts";
 import { StepJob } from "$/jobs/step.ts";
 import { RetrievalJob } from "$/jobs/retrieval.ts";
 import { CodeInterpreterJob } from "$/jobs/code_interpreter.ts";
+import { VectorStoreJob } from "$/jobs/vector_store.ts";
 import { FileJob } from "$/jobs/file.ts";
 
 /**
@@ -16,7 +17,13 @@ export interface JobMessage {
   /**
    * The type of job.
    */
-  type: "run" | "step" | "retrieval" | "code_interpreter" | "file";
+  type:
+    | "run"
+    | "step"
+    | "retrieval"
+    | "code_interpreter"
+    | "file"
+    | "vector_store";
 }
 
 /**
@@ -48,6 +55,9 @@ export class Job {
         break;
       case "file":
         await FileJob.execute(params);
+        break;
+      case "vector_store":
+        await VectorStoreJob.execute(params);
         break;
       default:
         error(`Unknown the type(${type}) of job message.`);

@@ -31,6 +31,14 @@ export const FILE_KEY = "file";
 export const FILE_OBJECT = "file";
 export const FILE_PREFIX = "file";
 
+export const VECTOR_STORE_KEY = "vector_store";
+export const VECTOR_STORE_OBJECT = "vector_store";
+export const VECTOR_STORE_PREFIX = "vs";
+
+export const VECTOR_STORE_FILE_KEY = "vector_store_file";
+export const VECTOR_STORE_FILE_OBJECT = "vector_store.file";
+export const VECTOR_STORE_FILE_PREFIX = FILE_PREFIX;
+
 export const FILE_INFO_KEY = "file_info";
 
 // 10 minutes, unit: second

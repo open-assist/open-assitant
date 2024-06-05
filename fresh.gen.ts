@@ -27,6 +27,8 @@ import * as $v1_threads_thread_id_runs_run_id_steps_index from "./routes/v1/thre
 import * as $v1_threads_thread_id_runs_run_id_submit_tool_outputs from "./routes/v1/threads/[thread_id]/runs/[run_id]/submit_tool_outputs.ts";
 import * as $v1_threads_thread_id_runs_index from "./routes/v1/threads/[thread_id]/runs/index.ts";
 import * as $v1_threads_index from "./routes/v1/threads/index.ts";
+import * as $v1_vector_stores_vector_store_id_ from "./routes/v1/vector_stores/[vector_store_id].ts";
+import * as $v1_vector_stores_index from "./routes/v1/vector_stores/index.ts";
 
 import { type Manifest } from "$fresh/server.ts";
 
@@ -65,6 +67,9 @@ const manifest = {
     "./routes/v1/threads/[thread_id]/runs/index.ts":
       $v1_threads_thread_id_runs_index,
     "./routes/v1/threads/index.ts": $v1_threads_index,
+    "./routes/v1/vector_stores/[vector_store_id].ts":
+      $v1_vector_stores_vector_store_id_,
+    "./routes/v1/vector_stores/index.ts": $v1_vector_stores_index,
   },
   islands: {},
   baseUrl: import.meta.url,
