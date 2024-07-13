@@ -2,7 +2,7 @@ import { kv, Repository } from "$/repositories/base.ts";
 import {
   CreateVectorStoreRequest,
   VectorStoreObject,
-} from "$open-schemas/types/openai/mod.ts";
+} from "$/schemas/openai/assistant.ts";
 import {
   ORGANIZATION,
   VECTOR_STORE_KEY,
@@ -51,7 +51,7 @@ export class VectorStoreRepository extends Repository<VectorStoreObject> {
       totalFilesCount = fields.file_ids.length;
     }
 
-    const id = `${this.idPrefix}-${ulid()}`;
+    const id = `${this.idPrefix}_${ulid()}`;
     const key = this.genKvKey(org, id);
     const currentTime = now();
     const value = {
@@ -80,10 +80,20 @@ export class VectorStoreRepository extends Repository<VectorStoreObject> {
         await VectorStoreFileRepository.getInstance().createByFileId(
           fileId,
           id,
+          fields.chunking_strategy,
           operation,
         );
       });
     }
+
+    operation.enqueue({
+      type: "vector_store",
+      args: JSON.stringify({
+        action: "create",
+        organization: org,
+        vectorStoreId: id,
+      }),
+    });
 
     if (fields.expires_after) {
       operation.enqueue({
@@ -103,5 +113,39 @@ export class VectorStoreRepository extends Repository<VectorStoreObject> {
       if (!ok) throw new Conflict();
     }
     return value;
+  }
+
+  async destroyWithFiles(
+    vectorStoreId: string,
+    organization: string,
+    operation?: Deno.AtomicOperation,
+  ) {
+    let commit = true;
+    if (operation) {
+      commit = false;
+    } else {
+      operation = kv.atomic();
+    }
+
+    const vsfRepo = VectorStoreFileRepository.getInstance();
+    const files = await vsfRepo.findAll(vectorStoreId);
+    files.forEach((f) => {
+      operation.delete(vsfRepo.genKvKey(vectorStoreId, f.id));
+    });
+
+    this.destory(vectorStoreId, organization, operation);
+
+    operation.enqueue({
+      type: "vector_store",
+      args: JSON.stringify({
+        action: "delete",
+        organization,
+        vectorStoreId,
+      }),
+    });
+
+    if (commit) {
+      await operation.commit();
+    }
   }
 }

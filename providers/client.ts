@@ -1,7 +1,4 @@
-import {
-  CreateChatCompletionRequest,
-  CreateChatCompletionResponse,
-} from "@open-schemas/zod";
+import { CreateChatCompletionRequest } from "$open-schemas/types/openai/mod.ts";
 import google from "$/providers/google/client.ts";
 import ollama from "$/providers/ollama/client.ts";
 import { getProvider } from "$/utils/llm.ts";
@@ -40,7 +37,7 @@ export default class Client {
   public static createChatCompletion(
     request: CreateChatCompletionRequest,
     mappedModel?: string,
-  ): Promise<CreateChatCompletionResponse | ReadableStream> {
+  ) {
     const client = this.getProviderClient();
     return client.createChatCompletion(request, mappedModel);
   }

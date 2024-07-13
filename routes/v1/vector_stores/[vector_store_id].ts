@@ -41,7 +41,7 @@ export const handler: Handlers<VectorStoreObject | null> = {
     await getVectorStore(ctx);
     const { id, parentId } = getIDs(ctx);
 
-    await VectorStoreRepository.getInstance().destory(id, parentId);
+    await VectorStoreRepository.getInstance().destroyWithFiles(id, parentId);
 
     return Response.json(DeleteVectorStoreResponse.parse({ id }));
   },

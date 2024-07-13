@@ -4,7 +4,7 @@ import {
   Ordering,
   Pagination,
   type VectorStoreObject,
-} from "$open-schemas/zod/openai/mod.ts";
+} from "$/schemas/openai/mod.ts";
 import { VectorStoreRepository } from "$/repositories/vector_store.ts";
 
 export const handler: Handlers<VectorStoreObject | null> = {

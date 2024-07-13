@@ -1,5 +1,5 @@
-import { type CreateChatCompletionRequestType } from "openai_schemas";
-import { GOOGLE_API_URL, GOOGLE_API_KEY } from "$/utils/constants.ts";
+import { type CreateChatCompletionRequest } from "$open-schemas/types/openai/mod.ts";
+import { GOOGLE_API_KEY, GOOGLE_API_URL } from "$/utils/constants.ts";
 import {
   CreateChatCompletionRequestToGenerateContentRequest,
   GenerateContentResponseToCreateChatCompletionResponse,
@@ -11,7 +11,7 @@ export default class Client {
   static apiVersion = "v1beta";
 
   public static async createChatCompletion(
-    request: CreateChatCompletionRequestType,
+    request: CreateChatCompletionRequest,
     mappedModel?: string,
   ) {
     const modelMethod = request.stream
@@ -35,8 +35,8 @@ export default class Client {
       return readable;
     }
 
-    const completion =
-      GenerateContentResponseToCreateChatCompletionResponse.parse(
+    const completion = GenerateContentResponseToCreateChatCompletionResponse
+      .parse(
         await response.json(),
       );
     completion.model = mappedModel ?? request.model;

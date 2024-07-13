@@ -1,4 +1,4 @@
-import { ObjectMeta, Pagination, Ordering } from "@open-schemas/zod/openai";
+import { ObjectMeta, Ordering, Pagination } from "@open-schemas/zod/openai";
 import { z } from "zod";
 import { ulid } from "$std/ulid/mod.ts";
 import { Conflict, NotFound } from "$/utils/errors.ts";
@@ -6,7 +6,10 @@ import { now } from "$/utils/date.ts";
 import { DENO_KV_PATH } from "$/consts/envs.ts";
 
 let path = undefined;
-if ((await Deno.permissions.query({ name: "env", variable: DENO_KV_PATH })).state === "granted") {
+if (
+  (await Deno.permissions.query({ name: "env", variable: DENO_KV_PATH }))
+    .state === "granted"
+) {
   path = Deno.env.get(DENO_KV_PATH);
 }
 export const kv = await Deno.openKv(path);
@@ -75,7 +78,10 @@ export class Repository<T> {
     const options = {
       reverse: ordering?.order === "desc",
     };
-    return await Array.fromAsync(kv.list<T>(selector, options), ({ value }) => value);
+    return await Array.fromAsync(
+      kv.list<T>(selector, options),
+      ({ value }) => value,
+    );
   }
 
   async findAllByPage(
@@ -124,7 +130,10 @@ export class Repository<T> {
       reverse: true,
     } as Deno.KvListOptions;
 
-    const entrys = await Array.fromAsync(kv.list<T>(selector, options), ({ value }) => value);
+    const entrys = await Array.fromAsync(
+      kv.list<T>(selector, options),
+      ({ value }) => value,
+    );
     return entrys.at(0);
   }
 
@@ -156,7 +165,7 @@ export class Repository<T> {
       operation = kv.atomic();
     }
 
-    const id = `${this.idPrefix}-${ulid()}`;
+    const id = `${this.idPrefix}_${ulid()}`;
     const value = {
       id,
       object: this.object,
@@ -169,7 +178,10 @@ export class Repository<T> {
 
     if (this.hasSecondaryKey) {
       const secondaryKey = this.genKvKey(undefined, id);
-      operation.check({ key: secondaryKey, versionstamp: null }).set(secondaryKey, key);
+      operation.check({ key: secondaryKey, versionstamp: null }).set(
+        secondaryKey,
+        key,
+      );
     }
 
     if (commit) {
@@ -206,7 +218,11 @@ export class Repository<T> {
     return value;
   }
 
-  async destory(id: string, parentId?: string, operation?: Deno.AtomicOperation) {
+  async destory(
+    id: string,
+    parentId?: string,
+    operation?: Deno.AtomicOperation,
+  ) {
     let commit = true;
     if (operation) {
       commit = false;

@@ -1,7 +1,7 @@
-import { CreateChatCompletionRequestType } from "openai_schemas";
+import { CreateChatCompletionRequest } from "$open-schemas/types/openai/mod.ts";
 import {
-  CreateChatCompletionRequestToChatRequest,
   ChatResponseToCreateChatCompletionResponse,
+  CreateChatCompletionRequestToChatRequest,
 } from "$/providers/ollama/transforms.ts";
 import { ChatTransformStream } from "$/providers/ollama/streams.ts";
 import { InternalServerError } from "$/utils/errors.ts";
@@ -15,14 +15,14 @@ export default class Client {
   /**
    * Map openai's `/chat/completions` api to `/api/chat` api of ollama.
    *
-   * @param {CreateChatCompletionRequestType} request in openai format
+   * @param {CreateChatCompletionRequest} request in openai format
    * @param {string} [mappedModel] - Optional model override for the anthropic response.
    *   If provided, the model property will be set to this value.
    *
    * @returns the chat completion object or the readable stream of chat completion chunk.
    */
   public static async createChatCompletion(
-    request: CreateChatCompletionRequestType,
+    request: CreateChatCompletionRequest,
     mappedModel?: string,
   ) {
     const response = await this.fetch("/chat", {
@@ -53,7 +53,9 @@ export default class Client {
         if (response.status >= 400) {
           response.json().then((body) => {
             log.error(
-              `[${LOG_TAG}] client fetch with response status: ${response.status}, body: ${JSON.stringify(body)}`,
+              `[${LOG_TAG}] client fetch with response status: ${response.status}, body: ${
+                JSON.stringify(body)
+              }`,
             );
           });
           throw new InternalServerError();

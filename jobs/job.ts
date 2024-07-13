@@ -5,6 +5,7 @@ import { RetrievalJob } from "$/jobs/retrieval.ts";
 import { CodeInterpreterJob } from "$/jobs/code_interpreter.ts";
 import { VectorStoreJob } from "$/jobs/vector_store.ts";
 import { FileJob } from "$/jobs/file.ts";
+import { VectorStoreFileJob } from "$/jobs/vector_store_file.ts";
 
 /**
  * Represents a job message containing information about a job to be executed.
@@ -23,7 +24,8 @@ export interface JobMessage {
     | "retrieval"
     | "code_interpreter"
     | "file"
-    | "vector_store";
+    | "vector_store"
+    | "vector_store_file";
 }
 
 /**
@@ -58,6 +60,9 @@ export class Job {
         break;
       case "vector_store":
         await VectorStoreJob.execute(params);
+        break;
+      case "vector_store_file":
+        await VectorStoreFileJob.execute(params);
         break;
       default:
         error(`Unknown the type(${type}) of job message.`);

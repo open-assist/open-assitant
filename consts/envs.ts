@@ -14,6 +14,10 @@ export const LLM_MODELS_MAPPING = "LLM_MODELS_MAPPING";
 export const LLM_HAS_MULTIMODAL_MODELS = "LLM_HAS_MULTIMODAL_MODELS";
 export const MODEL_KNOWLEDGE_CUTOFF = "MODEL_KNOWLEDGE_CUTOFF";
 
+// this env names for embedding
+export const EMBEDDING_POVIDER = "EMBEDDING_POVIDER";
+export const EMBEDDING_MODELS = "EMBEDDING_MODELS";
+
 // the env var names of anthropic
 export const ANTHROPIC_API_URL = "ANTHROPIC_API_URL";
 export const ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY";
@@ -29,3 +33,6 @@ export const RETRIEVAL_PROVIDER = "RETRIEVAL_PROVIDER";
 // open retrieval
 export const OPEN_RETRIEVAL_API_URL = "OPEN_RETRIEVAL_API_URL";
 export const OPEN_RETRIEVAL_API_KEY = "OPEN_RETRIEVAL_API_KEY";
+
+// open tokeniser
+export const TOKENISER_API_URL = "TOKENISER_API_URL";
