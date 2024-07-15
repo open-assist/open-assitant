@@ -1,19 +1,21 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import type { VectorStoreFileObject } from "$open-schemas/types/openai/mod.ts";
 import {
   CreateVectorStoreFileRequest,
   Ordering,
   Pagination,
+  VectorStoreFileObject,
 } from "$/schemas/openai/mod.ts";
 import { VectorStoreFileRepository } from "$/repositories/vector_store_file.ts";
+import { getVectorStore } from "$/routes/v1/vector_stores/[vector_store_id].ts";
 
 export const handler: Handlers<VectorStoreFileObject | null> = {
   async GET(_req: Request, ctx: FreshContext) {
     const params = Object.fromEntries(ctx.url.searchParams);
-    const organization = ctx.state.organization as string;
+    // const organization = ctx.state.organization as string;
+    const vectorStoreId = ctx.params.vector_store_id as string;
 
     const page = await VectorStoreFileRepository.getInstance().findAllByPage(
-      organization,
+      vectorStoreId,
       Pagination.parse(params),
       Ordering.parse(params),
     );
@@ -23,13 +25,13 @@ export const handler: Handlers<VectorStoreFileObject | null> = {
 
   async POST(req: Request, ctx: FreshContext) {
     const fields = CreateVectorStoreFileRequest.parse(await req.json());
-    const vectorStoreId = ctx.params.vector_store_id as string;
+    const vectorStore = await getVectorStore(ctx);
     const organization = ctx.state.organization as string;
 
     const vectorStoreFile = await VectorStoreFileRepository.getInstance()
       .createByFileIdWithJob(
         fields.file_id,
-        vectorStoreId,
+        vectorStore,
         organization,
         fields.chunking_strategy,
       );

@@ -103,6 +103,7 @@ export class VectorStoreFileJob {
         vsf,
         {
           status: "completed",
+          usage_bytes: await VectorDb.size(vectorStoreId, fileId),
         },
         vectorStoreId,
         operation,
@@ -112,8 +113,8 @@ export class VectorStoreFileJob {
         {
           file_counts: {
             ...vs.file_counts,
-            in_progress: vs.file_counts.in_progress - 1,
-            completed: vs.file_counts.completed + 1,
+            in_progress: this.accumulate(-1, vs.file_counts.in_progress),
+            completed: this.accumulate(1, vs.file_counts.completed),
           },
           usage_bytes: await VectorDb.size(vectorStoreId),
         },
@@ -135,36 +136,46 @@ export class VectorStoreFileJob {
     organization: string,
     vectorStoreId: string,
     fileId: string,
+    status: VectorStoreFileObject["status"],
   ) {
     const logName = `vector store(${vectorStoreId}) and file(${fileId})`;
     log.info(`${LOG_TAG} start {delete} action for ${logName}`);
-    const vsfRepo = VectorStoreFileRepository.getInstance();
     const vsRepo = VectorStoreRepository.getInstance();
-    let vsf, vs;
+    let vs;
     try {
-      vsf = await vsfRepo.findById(fileId, vectorStoreId);
       vs = await vsRepo.findById(vectorStoreId, organization);
     } catch (e) {
       log.error(`${LOG_TAG} find ${logName} with ${e}`);
     }
-    if (!vsf || !vs) return;
+    if (!vs) return;
 
     await VectorDb.delete(vectorStoreId, fileId);
 
-    vsRepo.update(
+    await vsRepo.update(
       vs,
       {
         usage_bytes: await VectorDb.size(vectorStoreId),
         file_counts: {
           ...vs.file_counts,
-          [vsf.status]: vs.file_counts[vsf.status] - 1,
-          total: vs.file_counts.total - 1,
+          [status]: this.accumulate(-1, vs.file_counts[status]),
+          total: this.accumulate(-1, vs.file_counts.total),
         },
       },
       organization,
     );
 
-    log.info(`${LOG_TAG} start {delete} action for ${logName}`);
+    log.info(`${LOG_TAG} complete {delete} action for ${logName}`);
+  }
+
+  private static accumulate(b: number, a?: number | null) {
+    if (a) {
+      return a + b > 0 ? a + b : 0;
+    } else {
+      if (b > 0) {
+        return b;
+      }
+      return 0;
+    }
   }
 
   public static async execute(args: {
@@ -172,6 +183,7 @@ export class VectorStoreFileJob {
     vectorStoreId: string;
     fileId: string;
     action: "index" | "delete";
+    status?: string;
   }) {
     const { action, vectorStoreId, organization, fileId } = args;
     switch (action) {
@@ -179,7 +191,12 @@ export class VectorStoreFileJob {
         await this.index(organization, vectorStoreId, fileId);
         break;
       case "delete":
-        await this.delete(organization, vectorStoreId, fileId);
+        await this.delete(
+          organization,
+          vectorStoreId,
+          fileId,
+          args["status"] as VectorStoreFileObject["status"],
+        );
         break;
     }
   }

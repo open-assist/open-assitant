@@ -1,6 +1,8 @@
 import { FreshContext, Handlers } from "$fresh/server.ts";
-import type { VectorStoreFileObject } from "$open-schemas/types/openai/mod.ts";
-import { DeleteVectorStoreFileResponse } from "$open-schemas/zod/openai/mod.ts";
+import {
+  DeleteVectorStoreFileResponse,
+  VectorStoreFileObject,
+} from "$/schemas/openai/mod.ts";
 import { VectorStoreFileRepository } from "$/repositories/vector_store_file.ts";
 import { getVectorStore } from "$/routes/v1/vector_stores/[vector_store_id].ts";
 

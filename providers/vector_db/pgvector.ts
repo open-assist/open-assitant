@@ -51,10 +51,22 @@ export default class Client {
     await this.query(sql);
   }
 
-  public static async size(vectorStoreId: string): Promise<number> {
-    const sql = `SELECT pg_table_size('${vectorStoreId}') as size`;
+  public static async size(
+    vectorStoreId: string,
+    fileId?: string,
+  ): Promise<number> {
+    let query = `SELECT pg_table_size('${vectorStoreId}') as size`;
+    if (fileId) {
+      query = `WITH record_sizes AS (
+    SELECT pg_column_size(t.*) AS column_size FROM ${vectorStoreId} t WHERE file_id = '${fileId}'
+)
+SELECT 
+    sum(column_size) AS size
+FROM 
+    record_sizes;`;
+    }
 
-    const { rows: [{ size }] } = await this.query(sql);
+    const { rows: [{ size }] } = await this.query(query);
     return Number(size);
   }
 

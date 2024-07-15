@@ -16,6 +16,7 @@ import {
 } from "$/schemas/openai/mod.ts";
 import { Jina } from "$/providers/reader/jina.ts";
 import { ulid } from "$std/ulid/mod.ts";
+import { VectorStoreRepository } from "$/repositories/vector_store.ts";
 
 const DEFAULT_CHUNKING_STRATEGY = {
   type: "static",
@@ -90,7 +91,7 @@ export class VectorStoreFileRepository
 
   async createByFileIdWithJob(
     fileId: string,
-    vectorStoreId: string,
+    vectorStore: VectorStoreObject,
     organization: string,
     chunkingStrategy?: AutoChunkingStrategy | StaticChunkingStrategy | null,
   ) {
@@ -98,7 +99,7 @@ export class VectorStoreFileRepository
 
     const value = await this.createByFileId(
       fileId,
-      vectorStoreId,
+      vectorStore.id,
       chunkingStrategy,
       operation,
     );
@@ -106,11 +107,23 @@ export class VectorStoreFileRepository
       type: "vector_store_file",
       args: JSON.stringify({
         action: "index",
-        vectorStoreId,
-        fileId,
+        vectorStoreId: vectorStore.id,
+        fileId: value.id,
         organization,
       }),
     });
+    await VectorStoreRepository.getInstance().update(
+      vectorStore,
+      {
+        file_counts: {
+          ...vectorStore.file_counts,
+          in_progress: vectorStore.file_counts.in_progress + 1,
+          total: vectorStore.file_counts.total + 1,
+        },
+      },
+      organization,
+      operation,
+    );
 
     const { ok } = await operation.commit();
     if (!ok) throw new Conflict();
@@ -132,6 +145,7 @@ export class VectorStoreFileRepository
           vectorStoreId: vs.id,
           fileId: vsf.id,
           organization,
+          status: vsf.status,
         }),
       });
 
