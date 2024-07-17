@@ -2,7 +2,7 @@ import { kv, Repository } from "$/repositories/base.ts";
 import {
   CreateVectorStoreRequest,
   VectorStoreObject,
-} from "$/schemas/openai/assistant.ts";
+} from "$/schemas/openai/mod.ts";
 import {
   ORGANIZATION,
   VECTOR_STORE_KEY,

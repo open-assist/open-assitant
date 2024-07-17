@@ -1,4 +1,4 @@
-import { LLM_PROVIDER, LLM_MODELS, LLM_MODELS_MAPPING } from "$/consts/envs.ts";
+import { LLM_MODELS, LLM_PROVIDER, MODELS_MAPPING } from "$/consts/envs.ts";
 import { EnvNotSet } from "$/utils/errors.ts";
 
 /**
@@ -75,8 +75,8 @@ function mapModels(pre: object, cur: string) {
  *
  * @returns An object containing the mapped models, or undefined if the environment variable is not set.
  */
-export function getModelsMapping() {
-  const models_mapping = Deno.env.get(LLM_MODELS_MAPPING);
+export function getModelsMapping(): Record<string, string> | undefined {
+  const models_mapping = Deno.env.get(MODELS_MAPPING);
   if (!models_mapping) return undefined;
 
   return models_mapping.split(",").reduce(mapModels, {});

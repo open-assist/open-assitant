@@ -83,3 +83,33 @@ export type EmbedContentResponse = {
    */
   embedding: ContentEmbedding;
 };
+
+/**
+ * Metadata on the generation request's token usage.
+ */
+export type UsageMetadata = {
+  /**
+   * Number of tokens in the prompt. When cachedContent is set, this is still the total effective
+   * prompt size.
+   */
+  promptTokenCount: number;
+  /**
+   * Total number of tokens across the generated candidates.
+   */
+  candidatesTokenCount: number;
+  /**
+   * Total token count for the generation request (prompt + candidates).
+   */
+  totalTokenCount: number;
+};
+
+export type GenerateContentRequest = {
+  /**
+   * The content of the current conversation with the model.
+   */
+  contents: Content[];
+  /**
+   * Metadata on the generation requests' token usage.
+   */
+  usageMetadata: UsageMetadata;
+};

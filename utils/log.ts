@@ -27,7 +27,9 @@ export function logResponseError(response: Response) {
   if (response.status >= 400) {
     response.json().then((body) => {
       log.error(
-        `[client] fetch with response status: ${response.status}, body: ${JSON.stringify(body)}`,
+        `fetch with response status: ${response.status}, body: ${
+          JSON.stringify(body)
+        }`,
       );
     });
     throw new InternalServerError();

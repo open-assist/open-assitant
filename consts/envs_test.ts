@@ -1,17 +1,20 @@
 import { assertExists } from "@std/assert";
 import { describe, it } from "$std/testing/bdd.ts";
 import {
-  LOG_LEVEL,
-  MODEL_KNOWLEDGE_CUTOFF,
-  LLM_PROVIDER,
-  LLM_MODELS,
-  LLM_MODELS_MAPPING,
   ANTHROPIC_API_KEY,
   ANTHROPIC_API_URL,
   ANTHROPIC_VERSION,
   FILE_DIR,
-  ORG_FILES_SIZE_MAX,
+  GOOGLE_API_KEY,
+  GOOGLE_API_URL,
+  GOOGLE_API_VERSION,
+  LLM_MODELS,
+  LLM_MODELS_MAPPING,
+  LLM_PROVIDER,
+  LOG_LEVEL,
+  MODEL_KNOWLEDGE_CUTOFF,
   NO_TENANT,
+  ORG_FILES_SIZE_MAX,
 } from "$/consts/envs.ts";
 
 describe("Log variables", () => {
@@ -63,5 +66,19 @@ describe("API variables", () => {
 
   it("The NO_TENANT const exists", () => {
     assertExists(NO_TENANT);
+  });
+});
+
+describe("The variables for Google AI", () => {
+  it("The GOOGLE_API_KEY const exists", () => {
+    assertExists(GOOGLE_API_KEY);
+  });
+
+  it("The GOOGLE_API_URL const exists", () => {
+    assertExists(GOOGLE_API_URL);
+  });
+
+  it("The GOOGLE_API_VERSION const exists", () => {
+    assertExists(GOOGLE_API_VERSION);
   });
 });

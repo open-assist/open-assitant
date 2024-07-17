@@ -15,10 +15,14 @@ import { NotSet } from "$/utils/errors.ts";
  * const apiKey = getEnv('API_KEY');
  * ```
  */
-export function getEnv(name: string) {
+export function getEnv(name: string, defaultValue?: string) {
   const env = Deno.env.get(name);
   if (!env) {
-    throw new NotSet(name);
+    if (defaultValue) {
+      return defaultValue;
+    } else {
+      throw new NotSet(name);
+    }
   }
   return env;
 }

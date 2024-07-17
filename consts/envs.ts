@@ -36,3 +36,10 @@ export const OPEN_RETRIEVAL_API_KEY = "OPEN_RETRIEVAL_API_KEY";
 
 // open tokeniser
 export const TOKENISER_API_URL = "TOKENISER_API_URL";
+
+export const MODELS_MAPPING = "MODELS_MAPPING";
+
+// the env var name of google ai api url
+export const GOOGLE_API_URL = "GOOGLE_API_URL";
+export const GOOGLE_API_KEY = "GOOGLE_API_KEY";
+export const GOOGLE_API_VERSION = "GOOGLE_API_VERSION";

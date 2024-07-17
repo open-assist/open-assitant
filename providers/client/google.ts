@@ -1,19 +1,26 @@
-import { GOOGLE_API_KEY, GOOGLE_API_URL } from "$/utils/constants.ts";
+import {
+  GOOGLE_API_KEY,
+  GOOGLE_API_URL,
+  GOOGLE_API_VERSION,
+} from "$/consts/envs.ts";
+import { getEnv } from "$/utils/env.ts";
+import { logResponseError } from "$/utils/log.ts";
 
 export default class Client {
-  static apiVersion = "v1";
-  static baseURL = Deno.env.get(GOOGLE_API_URL) ??
-    "https://generativelanguage.googleapis.com";
+  static apiVersion = getEnv(GOOGLE_API_VERSION, "v1");
+  static baseURL = getEnv(
+    GOOGLE_API_URL,
+    "https://generativelanguage.googleapis.com",
+  );
+  static apiKey = getEnv(GOOGLE_API_KEY);
 
-  static fetch(input: string, init?: RequestInit) {
-    return fetch(`${this.baseURL}/${this.apiVersion}${input}`, {
+  static async fetch(input: string, init?: RequestInit) {
+    return await fetch(`${this.baseURL}/${this.apiVersion}${input}`, {
       ...init,
       headers: {
         ...init?.headers,
-        "X-Goog-Api-Key": Deno.env.get(GOOGLE_API_KEY) as string,
+        "X-Goog-Api-Key": this.apiKey,
       },
-    }).then((r) => {
-      return r.json();
-    });
+    }).then(logResponseError);
   }
 }

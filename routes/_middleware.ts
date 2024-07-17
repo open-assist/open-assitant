@@ -33,8 +33,6 @@ export function handler(req: Request, ctx: FreshContext) {
   return ctx
     .next()
     .catch((error: Error) => {
-      log.error(error);
-
       const problemDetail: ProblemDetail = {
         type: "about:blank",
         status: 500,
@@ -69,6 +67,7 @@ export function handler(req: Request, ctx: FreshContext) {
         case DbCommitError:
         case InternalServerError:
           problemDetail.status = 500;
+          log.error(error);
           break;
       }
 
