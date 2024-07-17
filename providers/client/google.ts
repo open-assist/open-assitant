@@ -12,7 +12,7 @@ export default class Client {
     GOOGLE_API_URL,
     "https://generativelanguage.googleapis.com",
   );
-  static apiKey = getEnv(GOOGLE_API_KEY);
+  static apiKey = getEnv(GOOGLE_API_KEY, "GOOGLE_API_KEY");
 
   static async fetch(input: string, init?: RequestInit) {
     return await fetch(`${this.baseURL}/${this.apiVersion}${input}`, {
