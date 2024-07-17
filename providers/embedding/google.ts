@@ -2,7 +2,7 @@ import Base from "$/providers/client/google.ts";
 import {
   CreateEmbeddingRequest,
   CreateEmbeddingResponse,
-} from "$/schemas/openai/embedding.ts";
+} from "$/schemas/openai/mod.ts";
 import {
   EmbedContentRequest,
   EmbedContentResponse,
