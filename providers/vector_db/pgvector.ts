@@ -1,11 +1,18 @@
 import { Pool, QueryArguments } from "$postgres/mod.ts";
 import * as log from "$std/log/mod.ts";
-
-const databaseUrl = Deno.env.get("PGVECTOR_URL")!;
-const embeddingDimension = Deno.env.get("EMBEDDING_DIMENSION")!;
+import { getEnv } from "$/utils/env.ts";
+import { EMBEDDING_DIMENSION, PGVECTOR_URL } from "$/consts/envs.ts";
 
 export default class Client {
-  static pool = new Pool(databaseUrl, 3, true);
+  static pool = new Pool(
+    getEnv(
+      PGVECTOR_URL,
+      "postgres://postgres:postgres@localhost:5432/assistant",
+    ),
+    5,
+    true,
+  );
+  static embeddingDimension = getEnv(EMBEDDING_DIMENSION, "1536");
 
   public static async create(vectorStoreId: string) {
     const sql = `
@@ -14,7 +21,7 @@ export default class Client {
           file_id TEXT NOT NULL,
           file_name TEXT NOT NULL,
           content TEXT NOT NULL,
-          embedding VECTOR(${embeddingDimension})
+          embedding VECTOR(${this.embeddingDimension})
         )
       `;
     await this.query(sql);

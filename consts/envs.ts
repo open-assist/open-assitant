@@ -17,6 +17,7 @@ export const MODEL_KNOWLEDGE_CUTOFF = "MODEL_KNOWLEDGE_CUTOFF";
 // this env names for embedding
 export const EMBEDDING_POVIDER = "EMBEDDING_POVIDER";
 export const EMBEDDING_MODELS = "EMBEDDING_MODELS";
+export const EMBEDDING_DIMENSION = "EMBEDDING_DIMENSION";
 
 // the env var names of anthropic
 export const ANTHROPIC_API_URL = "ANTHROPIC_API_URL";
@@ -43,3 +44,5 @@ export const MODELS_MAPPING = "MODELS_MAPPING";
 export const GOOGLE_API_URL = "GOOGLE_API_URL";
 export const GOOGLE_API_KEY = "GOOGLE_API_KEY";
 export const GOOGLE_API_VERSION = "GOOGLE_API_VERSION";
+
+export const PGVECTOR_URL = "PGVECTOR_URL";
